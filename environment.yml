@@ -3,8 +3,8 @@ channels:
 - pytorch
 - defaults
 dependencies:
-- cuda92
-- cudnn
+# - cuda92
+# - cudnn
 - numpy
 - ipython
 - jupyter
@@ -15,6 +15,7 @@ dependencies:
 - pytorch-nightly
 - torchvision
 - tqdm
+- tensorboard
 - pip:
   - atari-py
   - git+https://github.com/openai/gym/
