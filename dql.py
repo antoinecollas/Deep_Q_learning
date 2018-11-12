@@ -44,6 +44,9 @@ class Memory():
         self.replay_memory_size = replay_memory_size
     
     def push(self, transition):
+        for i in range(len(transition)):
+            if torch.is_tensor(transition[i]):
+                transition[i] = transition[i].to('cpu')
         if (len(self.replay_memory) >= self.replay_memory_size):
             self.replay_memory.popleft()
         self.replay_memory.append(transition)

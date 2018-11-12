@@ -7,6 +7,9 @@ from tensorboardX import SummaryWriter
 from torch.nn import SmoothL1Loss
 from torch.optim import RMSprop
 
+#GPU/CPU
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
 #TENSORBOARDX
 writer = SummaryWriter()
 
@@ -56,8 +59,8 @@ print('see more details on tensorboard')
 
 done = True #reset environment
 eps_schedule = ScheduleExploration(INITAL_EXPLORATION, FINAL_EXPLORATION, FINAL_EXPLORATION_FRAME)
-Q = DQN(AGENT_HISTORY_LENGTH, NB_ACTIONS)
-Q_hat = copy.deepcopy(Q)
+Q = DQN(AGENT_HISTORY_LENGTH, NB_ACTIONS).to(device)
+Q_hat = copy.deepcopy(Q).to(device)
 loss = SmoothL1Loss()
 optimizer = RMSprop(Q.parameters(), lr=LEARNING_RATE)
 
@@ -90,6 +93,7 @@ while episode < NB_EPISODES:
     if flag_random_exploration == 1:
         a_t = env.action_space.sample() #random action
     else:
+        phi_t = phi_t.to(device)
         a_t = torch.argmax(Q(phi_t), dim=1)
     t3 = time.time()
     duree_3 = t3-t2
@@ -121,7 +125,7 @@ while episode < NB_EPISODES:
     # print('duree_5=', duree_5)
 
     phi_t_training = torch.squeeze(torch.stack(phi_t_training))
-    phi_t_1_training = torch.squeeze(torch.stack(phi_t_1_training))
+    phi_t_1_training = torch.squeeze(torch.stack(phi_t_1_training)).to(device)
     Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)
     for j in range(len(transitions_training)):
         episode_terminates = transitions_training[4]
@@ -135,7 +139,8 @@ while episode < NB_EPISODES:
     #print('duree_6=', duree_6)
 
     #forward
-    Q_values =  Q(phi_t_training)
+    phi_t_training = phi_t_training.to(device)
+    Q_values = Q(phi_t_training)
     mask = torch.zeros([BATCH_SIZE, NB_ACTIONS])
     for j in range(len(transitions_training)):
         mask[j, transitions_training[j][1]] = 1
@@ -154,6 +159,6 @@ while episode < NB_EPISODES:
 
     if (step+1)%TARGET_NETWORK_UPDATE_FREQUENCY == 0:
         print("Update of Q hat!")
-        Q_hat = copy.deepcopy(Q)
+        Q_hat = copy.deepcopy(Q).to(device)
 
     step += 1
