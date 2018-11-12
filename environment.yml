@@ -1,0 +1,21 @@
+name: dql
+channels:
+- pytorch
+- defaults
+dependencies:
+- cuda92
+- cudnn
+- numpy
+- ipython
+- jupyter
+- matplotlib
+- numpy
+- pip
+- python
+- pytorch-nightly
+- torchvision
+- tqdm
+- pip:
+  - atari-py
+  - git+https://github.com/openai/gym/
+  - tensorboardX
