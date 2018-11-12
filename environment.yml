@@ -3,8 +3,8 @@ channels:
 - pytorch
 - defaults
 dependencies:
-# - cuda92
-# - cudnn
+- cuda92
+- cudnn
 - numpy
 - ipython
 - jupyter
