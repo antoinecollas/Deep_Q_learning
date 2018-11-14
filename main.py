@@ -27,8 +27,8 @@ INITAL_EXPLORATION = 1
 FINAL_EXPLORATION = 0.1
 FINAL_EXPLORATION_FRAME = 1000000
 # FINAL_EXPLORATION_FRAME = 10000
-# REPLAY_START_SIZE = 50000
-REPLAY_START_SIZE = 1000
+REPLAY_START_SIZE = 50000
+# REPLAY_START_SIZE = 1000
 NO_OP_MAX = 30
 NB_EPISODES = 1000
 
@@ -113,7 +113,7 @@ while episode < NB_EPISODES:
     # writer.add_scalar('data_per_step/mean_reward', r_t, step)
 
     #compute labels (y)
-    y = torch.zeros([BATCH_SIZE])
+    y = torch.zeros([BATCH_SIZE]).to(device)
     transitions_training = replay_memory.sample(BATCH_SIZE)
     phi_t_training = []
     phi_t_1_training = []
