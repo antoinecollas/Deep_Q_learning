@@ -141,7 +141,7 @@ while episode < NB_EPISODES:
     #forward
     phi_t_training = phi_t_training.to(device)
     Q_values = Q(phi_t_training)
-    mask = torch.zeros([BATCH_SIZE, NB_ACTIONS])
+    mask = torch.zeros([BATCH_SIZE, NB_ACTIONS]).to(device)
     for j in range(len(transitions_training)):
         mask[j, transitions_training[j][1]] = 1
     Q_values = Q_values * mask
