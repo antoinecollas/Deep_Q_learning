@@ -5,14 +5,12 @@ from torchvision.transforms import Compose, ToPILImage, Lambda, Resize, Grayscal
 from collections import deque
 import random 
 
-def preprocessing(images, progress_bar=False):
+def preprocess(images, progress_bar=False):
     ''' 
         Performs preprocessing on a batch of images (bs, h, w, c) or on a single image (h, w, c).
         It doesn't handle flickering!!
         Use grayscale instead of luminance.
     '''
-    if not torch.is_tensor(images):
-        images = torch.tensor(images)
     size_preprocessed_image = 84
     transformations = Compose([
         Lambda(lambda image: image.reshape([image.shape[2], image.shape[0], image.shape[1]])),
@@ -21,11 +19,7 @@ def preprocessing(images, progress_bar=False):
         Resize((size_preprocessed_image,size_preprocessed_image)),
         ToTensor()
     ])
-    assert len(images.shape) in [3,4]
-    if len(images.shape) == 3:
-        preprocessed_images = transformations(images)
-        preprocessed_images = torch.unsqueeze(preprocessed_images, 0)
-    elif len(images.shape) == 4:
+    if len(images.shape) == 4:
         batch_size = images.shape[0]
         preprocessed_images = []
         if progress_bar:
@@ -36,6 +30,8 @@ def preprocessing(images, progress_bar=False):
                 preprocessed_images.append(transformations(images[i]))
         preprocessed_images = torch.stack(preprocessed_images).squeeze()
         preprocessed_images = torch.unsqueeze(preprocessed_images, 0)
+    else:
+        raise ValueError('tensor s dimension should be 4')    
     return preprocessed_images
 
 class Memory():
@@ -44,12 +40,16 @@ class Memory():
         self.replay_memory_size = replay_memory_size
     
     def push(self, transition):
-        for i in range(len(transition)):
-            if torch.is_tensor(transition[i]):
-                transition[i] = transition[i].to('cpu')
+        if type(transition) is list:
+            for i in range(len(transition)):
+                if torch.is_tensor(transition[i]):
+                    transition[i] = transition[i].to('cpu')
         if (len(self.replay_memory) >= self.replay_memory_size):
             self.replay_memory.popleft()
         self.replay_memory.append(transition)
+
+    def __getitem__(self, i):
+        return self.replay_memory[i]
     
     def sample(self, batch_size):
         return random.sample(self.replay_memory, batch_size)

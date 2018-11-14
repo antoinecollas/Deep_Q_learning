@@ -46,10 +46,10 @@ for i in tqdm(range(REPLAY_START_SIZE)):
     #if an episode is ended
     if done:
         phi_t = env.reset()
-        phi_t = preprocessing(phi_t)
+        phi_t = preprocess(phi_t)
     a_t = env.action_space.sample() #random action
     phi_t_1, r_t, done, info = env.step(a_t)
-    phi_t_1 = preprocessing(phi_t_1)
+    phi_t_1 = preprocess(phi_t_1)
     replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
     phi_t = phi_t_1
 print('Replay memory is filled with', len(replay_memory), 'transitions. (Max capacity:', REPLAY_MEMORY_SIZE, ').')
@@ -76,7 +76,7 @@ while episode < NB_EPISODES:
             writer.add_scalar('data_per_episode/mean_reward', np.mean(rewards_episode), episode)
             writer.add_scalar('data_per_episode/replay_memory_size', len(replay_memory), episode)
         phi_t = env.reset()
-        phi_t = preprocessing(phi_t)
+        phi_t = preprocess(phi_t)
         episode += 1
         rewards_episode = []
 
@@ -101,7 +101,7 @@ while episode < NB_EPISODES:
 
     phi_t_1, r_t, done, info = env.step(a_t)
     rewards_episode.append(r_t)
-    phi_t_1 = preprocessing(phi_t_1)
+    phi_t_1 = preprocess(phi_t_1)
     replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
     phi_t = phi_t_1
     t4 = time.time()

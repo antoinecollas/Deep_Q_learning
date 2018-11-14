@@ -1,4 +1,4 @@
-import gym
+import gym, torch
 from gym import Wrapper
 import numpy as np
 
@@ -19,8 +19,8 @@ class KFrames(Wrapper):
         observations = []
         observation = self.env.reset()
         for i in range(self.k):
-            observations.append(observation)
-        return observations
+            observations.append(torch.tensor(observation))
+        return torch.stack(observations)
 
     def step(self, action):
         '''
@@ -31,21 +31,23 @@ class KFrames(Wrapper):
             - last info
         '''
         #becareful shape image tensor
-        observations = np.zeros([self.k, 210, 160, 3], dtype=np.float32)
+        observations = []
         mean_reward = 0
         done = False
         i = 0
-        while (done == False) and (i < self.k):
+        while (not done) and (i < self.k):
             observation, reward, done, info = self.env.step(action)
-            observations[i] = observation
+            observations.append(torch.tensor(observation))
             mean_reward += reward
-            i += 1
+            if not done:
+                i += 1
 
         if done == True:
             #if the game is ended, we duplicate the last frame in order to have k frames
-            for j in range(i, self.k):
-                observations[j] = observations[i]
+            for j in range(i, self.k-1):
+                observations.append(observations[i])
 
+        observations = torch.stack(observations)
         mean_reward /= self.k
 
         return observations, mean_reward, done, info
