@@ -1,7 +1,0 @@
-language: python
-install:
-  - conda env update
-  - conda activate dql
-
-script:
-  - pytest -sv
