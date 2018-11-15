@@ -164,9 +164,9 @@ def get_training_data(Q_hat, replay_memory, batch_size, discount_factor):
 
     phi_t_training = torch.squeeze(torch.stack(phi_t_training))
     phi_t_1_training = torch.squeeze(torch.stack(phi_t_1_training)).to(device)
-    Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)
+    Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
     for j in range(len(transitions_training)):
-        episode_terminates = transitions_training[4]
+        episode_terminates = transitions_training[j][4]
         if episode_terminates:
             y[j] = transitions_training[j][2]
         else:
