@@ -1,5 +1,5 @@
 import pytest, random, gym, torch
-from dql import Memory
+from dql import Memory, init_replay_memory
 
 def test_memory(steps_env):
     nb_steps = len(steps_env)
@@ -27,6 +27,13 @@ def test_memory(steps_env):
                 assert (memory[len(memory)-1-i][j] == steps_env[len(steps_env)-1-i][j]).all
             else:
                 assert memory[len(memory)-1-i][j] == steps_env[len(steps_env)-1-i][j], 'memory['+str(i)+']'+'['+str(j)+']=' + str(memory[len(memory)-1-i][j]) + ' steps_env['+str(i)+']'+'['+str(j)+']=' + str(steps_env[len(steps_env)-1-i][j]) 
+
+def test_init_replay_memory(env):
+    _, env = env
+    replay_memory_size = 100
+    replay_start_size = 10
+    replay_memory = init_replay_memory(env, replay_memory_size=replay_memory_size, replay_start_size=replay_start_size, print_info=False)
+    assert len(replay_memory) == replay_start_size
 
 # def test_sample(list_data):
 #     print(list_data)
