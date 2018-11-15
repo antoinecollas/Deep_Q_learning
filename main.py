@@ -153,6 +153,7 @@ while episode < NB_EPISODES:
     #print('duree_7=', duree_7)
 
     #backward
+    optimizer.zero_grad()
     output.backward()
 
     optimizer.step()
