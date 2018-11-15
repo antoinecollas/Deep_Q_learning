@@ -1,4 +1,4 @@
-import gym, torch, sys, copy, time
+import gym, torch, sys, copy
 from tqdm import tqdm
 from dql import *
 from wrapper_gym import KFrames
@@ -68,7 +68,6 @@ step = 0
 episode = 0
 rewards_episode = []
 while episode < NB_EPISODES:
-    t0 = time.time()
     #if an episode is ended
     if done:
         #tensorboard
@@ -80,37 +79,20 @@ while episode < NB_EPISODES:
         episode += 1
         rewards_episode = []
 
-    t1 = time.time()
-    duree_1 = t1-t0
-    #print('duree_1=', duree_1)
-
     eps = eps_schedule.step()
     flag_random_exploration = np.random.binomial(n=1, p=eps)
-    t2 = time.time()
-    duree_2 = t2-t1
-    #print('duree_2=', duree_2)
 
     if flag_random_exploration == 1:
         a_t = env.action_space.sample() #random action
     else:
         phi_t = phi_t.to(device)
         a_t = torch.argmax(Q(phi_t), dim=1)
-    t3 = time.time()
-    duree_3 = t3-t2
-    #print('duree_3=', duree_3)
 
     phi_t_1, r_t, done, info = env.step(a_t)
     rewards_episode.append(r_t)
     phi_t_1 = preprocess(phi_t_1)
     replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
     phi_t = phi_t_1
-    t4 = time.time()
-    duree_4 = t4-t3
-    #print('duree_4=', duree_4)
-
-    #tensorboard
-    # writer.add_scalar('data_per_step/eps', eps, step)
-    # writer.add_scalar('data_per_step/mean_reward', r_t, step)
 
     #compute labels (y)
     y = torch.zeros([BATCH_SIZE]).to(device)
@@ -120,9 +102,6 @@ while episode < NB_EPISODES:
     for j in range(len(transitions_training)):
         phi_t_training.append(transitions_training[j][0])
         phi_t_1_training.append(transitions_training[j][3])
-    t5 = time.time()
-    duree_5 = t5-t4
-    # print('duree_5=', duree_5)
 
     phi_t_training = torch.squeeze(torch.stack(phi_t_training))
     phi_t_1_training = torch.squeeze(torch.stack(phi_t_1_training)).to(device)
@@ -133,10 +112,6 @@ while episode < NB_EPISODES:
             y[j] = transitions_training[j][2]
         else:
             y[j] = transitions_training[j][2] + DISCOUNT_FACTOR * Q_hat_values[j]
-    
-    t6 = time.time()
-    duree_6 = t6-t5
-    #print('duree_6=', duree_6)
 
     #forward
     phi_t_training = phi_t_training.to(device)
@@ -147,10 +122,6 @@ while episode < NB_EPISODES:
     Q_values = Q_values * mask
     Q_values = torch.sum(Q_values, dim=1)
     output = loss(Q_values, y)
-
-    t7 = time.time()
-    duree_7 = t7-t6
-    #print('duree_7=', duree_7)
 
     #backward
     optimizer.zero_grad()
