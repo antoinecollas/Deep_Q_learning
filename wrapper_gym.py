@@ -1,26 +1,32 @@
 import gym, torch
 from gym import Wrapper
 import numpy as np
+from dql import Memory
 
 class KFrames(Wrapper):
     """
-        Instead of working frame by frame (like normale gym env), InfinityKFrames works k frames by k frames.
+        Implements: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessing-for-deep-q-networks-on-atari-2600-games/
+        without maximum component-wise ! (there no flickering in breakout)
     """
-    def __init__(self, env, k):
+    def __init__(self, env, history_length):
         super().__init__(env)
-        self.k = k
-    
+        self.history_length = history_length
+        self.skip_frames = history_length - 1
+
     def reset(self):
         '''
         returns:
-        - an array of the observation duplicated k times.
+        - an array of the observation duplicated history_length times.
         '''
-        #we duplicate the first frame in order to have k frames
-        observations = []
-        observation = self.env.reset()
-        for i in range(self.k):
-            observations.append(torch.tensor(observation))
-        return torch.stack(observations)
+        self.observations = Memory(self.history_length)
+        self.rewards = Memory(self.history_length)
+        self.done = False
+        #we duplicate the first frame in order to have history_length frames
+        observation = torch.tensor(self.env.reset())
+        for i in range(self.history_length):
+            self.observations.push(observation)
+        observations = torch.stack(list(self.observations.replay_memory))
+        return observations
 
     def step(self, action):
         '''
@@ -30,27 +36,26 @@ class KFrames(Wrapper):
             - done
             - last info
         '''
-        #becareful shape image tensor
-        observations = []
-        mean_reward = 0
-        done = False
-        i = 0
-        while (not done) and (i < self.k):
-            observation, reward, done, info = self.env.step(action)
-            observations.append(torch.tensor(observation))
-            mean_reward += reward
-            if not done:
-                i += 1
+        assert not self.done
+        j = 0
+        mean_rewards = 0
+        while (not self.done) and (j < self.skip_frames):
+            observation, reward, self.done, info = self.env.step(action)
+            mean_rewards += reward
+            j += 1
+        if not self.done:
+            observation, reward, self.done, info = self.env.step(action)
+            mean_rewards += reward
+            mean_rewards /= self.skip_frames + 1
+            self.observations.push(torch.tensor(observation))
+            self.rewards.push(mean_rewards)
 
-        if done == True:
-            #if the game is ended, we duplicate the last frame in order to have k frames
-            for j in range(i, self.k-1):
-                observations.append(observations[i])
-
-        observations = torch.stack(observations)
-        mean_reward /= self.k
-
-        return observations, mean_reward, done, info
+        observations = torch.stack(list(self.observations.replay_memory))
+        mean_rewards = 0
+        for i in range(len(self.rewards)):
+            mean_rewards += self.rewards[i]
+        mean_rewards /= len(self.rewards)
+        return observations, mean_rewards, self.done, info
     
     def render():
         raise NotImplementedError

@@ -8,7 +8,7 @@ import random
 def preprocess(images, progress_bar=False):
     ''' 
         Performs preprocessing on a batch of images (bs, h, w, c) or on a single image (h, w, c).
-        It doesn't handle flickering!!
+        It doesn't handle flickering!! (there no flickering in breakout)
         Use grayscale instead of luminance.
     '''
     size_preprocessed_image = 84

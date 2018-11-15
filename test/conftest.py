@@ -9,7 +9,7 @@ def env():
     '''
     nb_timesteps = 4
     env = gym.make("BreakoutNoFrameskip-v0")
-    env = KFrames(env, k=nb_timesteps)
+    env = KFrames(env, history_length=nb_timesteps)
     return (nb_timesteps, env)
 
 @pytest.fixture('function') #invoked once per test function
@@ -35,7 +35,7 @@ def steps_env():
     '''
     nb_timesteps = 4
     env = gym.make("BreakoutNoFrameskip-v0")
-    env = KFrames(env, k=nb_timesteps)
+    env = KFrames(env, history_length=nb_timesteps)
     observations = []
     phi_t = preprocess(env.reset())
     done = False
