@@ -14,7 +14,8 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 writer = SummaryWriter()
 
 #HYPERPARAMETERS
-BATCH_SIZE = 32
+BATCH_SIZE = 320
+# BATCH_SIZE = 32
 REPLAY_MEMORY_SIZE = 1000000
 TARGET_NETWORK_UPDATE_FREQUENCY = 10000
 DISCOUNT_FACTOR = 0.99
