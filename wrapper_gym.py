@@ -32,35 +32,33 @@ class KFrames(Wrapper):
         '''
         returns:
             - an array of the observations 
-            - mean reward
+            - reward
             - done
             - last info
         '''
         assert not self.done
         j = 0
-        mean_rewards = 0.0
+        sum_rewards = 0.0
         while (not self.done) and (j < self.skip_frames):
             observation, reward, self.done, info = self.env.step(action)
-            mean_rewards += reward
+            sum_rewards += reward
             j += 1
 
         if not self.done:
             observation, reward, self.done, info = self.env.step(action)
-            mean_rewards += reward
-            mean_rewards /= self.skip_frames + 1
+            sum_rewards += reward
             self.observations.push(torch.tensor(observation))
-            self.rewards.push(mean_rewards)
+            self.rewards.push(sum_rewards)
 
-            total_mean_rewards = 0.0
+            total_sum_rewards = 0.0
             for i in range(len(self.rewards)):
-                total_mean_rewards += self.rewards[i]
-            total_mean_rewards /= len(self.rewards)
+                total_sum_rewards += self.rewards[i]
             
         else:
-            total_mean_rewards = 0.0
+            total_sum_rewards = 0.0
 
         observations = torch.stack(list(self.observations.replay_memory))
-        return observations, total_mean_rewards, self.done, info
+        return observations, total_sum_rewards, self.done, info
     
     def render():
         raise NotImplementedError

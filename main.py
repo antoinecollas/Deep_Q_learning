@@ -56,7 +56,7 @@ while episode < NB_EPISODES:
     if done:
         #tensorboard
         if len(rewards_episode)>0:
-            writer.add_scalar('data_per_episode/mean_reward', np.mean(rewards_episode), episode)
+            writer.add_scalar('data_per_episode/reward', np.sum(rewards_episode), episode)
             writer.add_scalar('data_per_episode/replay_memory_size', len(replay_memory), episode)
             writer.add_scalar('data_per_episode/eps_exploration', eps_schedule.get_eps(), episode)
         phi_t = env.reset()
