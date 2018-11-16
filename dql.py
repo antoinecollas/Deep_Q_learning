@@ -31,6 +31,9 @@ def preprocess(images, progress_bar=False):
                 preprocessed_images.append(transformations(images[i]))
         preprocessed_images = torch.stack(preprocessed_images).squeeze()
         preprocessed_images = torch.unsqueeze(preprocessed_images, 0)
+        if len(preprocessed_images.shape) < 4:
+            preprocessed_images = torch.unsqueeze(preprocessed_images, 0)
+
     else:
         raise ValueError('tensor s dimension should be 4')    
     return preprocessed_images
@@ -171,5 +174,5 @@ def get_training_data(Q_hat, replay_memory, batch_size, discount_factor):
             y[j] = transitions_training[j][2]
         else:
             y[j] = transitions_training[j][2] + discount_factor * Q_hat_values[j]
-    
+    y = y.detach() #we don't want to compute gradients on target variables
     return phi_t_training, actions_training, y
