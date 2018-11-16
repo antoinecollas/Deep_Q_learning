@@ -17,7 +17,7 @@ writer = SummaryWriter()
 BATCH_SIZE = 320
 # BATCH_SIZE = 32
 REPLAY_MEMORY_SIZE = 1000000
-TARGET_NETWORK_UPDATE_FREQUENCY = 10000
+TARGET_NETWORK_UPDATE_FREQUENCY = 1000 #hyperparameter used in openAI baselines implementation
 DISCOUNT_FACTOR = 0.99
 AGENT_HISTORY_LENGTH = ACTION_REPEAT = UPDATE_FREQUENCY = 4
 LEARNING_RATE = 0.00025
@@ -31,7 +31,7 @@ FINAL_EXPLORATION_FRAME = 1000000
 REPLAY_START_SIZE = 50000
 # REPLAY_START_SIZE = 1000
 NO_OP_MAX = 30
-NB_EPISODES = 100000
+NB_TIMESTEPS = int(1e7) #hyperparameter used in openAI baselines implementation
 
 NB_ACTIONS = 4
 env = gym.make("BreakoutNoFrameskip-v0")
@@ -49,10 +49,9 @@ Q_hat = copy.deepcopy(Q).to(device)
 loss = SmoothL1Loss()
 optimizer = RMSprop(Q.parameters(), lr=LEARNING_RATE)
 
-step = 0
 episode = 0
 rewards_episode = []
-while episode < NB_EPISODES:
+for timestep in range(NB_TIMESTEPS):
     #if an episode is ended
     if done:
         #tensorboard
@@ -73,26 +72,27 @@ while episode < NB_EPISODES:
     replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
     phi_t = phi_t_1
 
-    #get training data
-    phi_t_training, actions_training, y = get_training_data(Q_hat, replay_memory, BATCH_SIZE, DISCOUNT_FACTOR)
+    #training
+    if timestep % UPDATE_FREQUENCY:
+        print('update')
+        #get training data
+        phi_t_training, actions_training, y = get_training_data(Q_hat, replay_memory, BATCH_SIZE, DISCOUNT_FACTOR)
 
-    #forward
-    phi_t_training = phi_t_training.to(device)
-    Q_values = Q(phi_t_training)
-    mask = torch.zeros([BATCH_SIZE, NB_ACTIONS]).to(device)
-    for j in range(len(actions_training)):
-        mask[j, actions_training[j]] = 1
-    Q_values = Q_values * mask
-    Q_values = torch.sum(Q_values, dim=1)
-    output = loss(Q_values, y)
+        #forward
+        phi_t_training = phi_t_training.to(device)
+        Q_values = Q(phi_t_training)
+        mask = torch.zeros([BATCH_SIZE, NB_ACTIONS]).to(device)
+        for j in range(len(actions_training)):
+            mask[j, actions_training[j]] = 1
+        Q_values = Q_values * mask
+        Q_values = torch.sum(Q_values, dim=1)
+        output = loss(Q_values, y)
 
-    #backward and gradient descent
-    optimizer.zero_grad()
-    output.backward()
-    optimizer.step()
+        #backward and gradient descent
+        optimizer.zero_grad()
+        output.backward()
+        optimizer.step()
 
-    if (step+1)%TARGET_NETWORK_UPDATE_FREQUENCY == 0:
+    if timestep % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
         print("Update of Q hat!")
         Q_hat = copy.deepcopy(Q).to(device)
-
-    step += 1
