@@ -9,6 +9,7 @@ from torch.optim import RMSprop
 
 #GPU/CPU
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+print('RUNNING ON', device)
 
 #TENSORBOARDX
 writer = SummaryWriter()
