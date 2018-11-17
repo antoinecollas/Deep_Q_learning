@@ -15,8 +15,7 @@ print('RUNNING ON', device)
 writer = SummaryWriter()
 
 #HYPERPARAMETERS
-BATCH_SIZE = 320
-# BATCH_SIZE = 32
+BATCH_SIZE = 32
 REPLAY_MEMORY_SIZE = 1000000
 TARGET_NETWORK_UPDATE_FREQUENCY = 1000 #hyperparameter used in openAI baselines implementation
 DISCOUNT_FACTOR = 0.99
