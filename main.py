@@ -28,8 +28,8 @@ INITAL_EXPLORATION = 1
 FINAL_EXPLORATION = 0.1
 FINAL_EXPLORATION_FRAME = 1000000
 # FINAL_EXPLORATION_FRAME = 10000
-REPLAY_START_SIZE = 50000
-# REPLAY_START_SIZE = 1000
+# REPLAY_START_SIZE = 50000
+REPLAY_START_SIZE = 1000
 NO_OP_MAX = 30
 NB_TIMESTEPS = int(1e7) #hyperparameter used in openAI baselines implementation
 
@@ -51,11 +51,11 @@ optimizer = RMSprop(Q.parameters(), lr=LEARNING_RATE)
 
 episode = 0
 rewards_episode = []
-for timestep in range(NB_TIMESTEPS):
+for timestep in tqdm(range(NB_TIMESTEPS)):#tqdm
     #if an episode is ended
     if done:
         #tensorboard
-        if len(rewards_episode)>0:
+        if (episode%10 == 0) and (len(rewards_episode)>0):
             writer.add_scalar('data_per_episode/reward', np.sum(rewards_episode), episode)
             writer.add_scalar('data_per_episode/replay_memory_size', len(replay_memory), episode)
             writer.add_scalar('data_per_episode/eps_exploration', eps_schedule.get_eps(), episode)
@@ -74,7 +74,6 @@ for timestep in range(NB_TIMESTEPS):
 
     #training
     if timestep % UPDATE_FREQUENCY:
-        print('update')
         #get training data
         phi_t_training, actions_training, y = get_training_data(Q_hat, replay_memory, BATCH_SIZE, DISCOUNT_FACTOR)
 
@@ -94,5 +93,4 @@ for timestep in range(NB_TIMESTEPS):
         optimizer.step()
 
     if timestep % TARGET_NETWORK_UPDATE_FREQUENCY == 0:
-        print("Update of Q hat!")
         Q_hat = copy.deepcopy(Q).to(device)

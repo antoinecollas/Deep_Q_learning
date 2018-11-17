@@ -10,5 +10,7 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
 - verify loss backward must not be on Q_hat ! (OK)
 - replace mean reward by sum of rewards (OK)
 - increase batch size (OK)
+- print less and store less in tensorboard (10x less) (OK)
 - NATURE paper uses frames as unit in hyperparameters whereas this implementation uses episodes (or a mixture of both ??)
+- compare speed with openAI baselines
 - render and visualize some episodes
