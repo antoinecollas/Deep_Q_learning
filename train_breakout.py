@@ -1,4 +1,4 @@
-import gym, torch, sys, copy
+import gym, torch, sys, copy, time, os
 from tqdm import tqdm
 from dql import *
 from wrapper_gym import KFrames
@@ -6,6 +6,12 @@ import numpy as np
 from tensorboardX import SummaryWriter
 from torch.nn import SmoothL1Loss
 from torch.optim import RMSprop
+
+#SAVE/LOAD MODEL
+DIRECTORY_MODELS = './models/'
+if not os.path.exists(DIRECTORY_MODELS):
+    os.makedirs(DIRECTORY_MODELS)
+PATH_SAVE = DIRECTORY_MODELS + time.strftime('%Y%m%d-%H%M')
 
 #GPU/CPU
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -54,11 +60,13 @@ rewards_episode = []
 for timestep in tqdm(range(NB_TIMESTEPS)):#tqdm
     #if an episode is ended
     if done:
-        #tensorboard
         if (episode%10 == 0) and (len(rewards_episode)>0):
+            #tensorboard
             writer.add_scalar('data_per_episode/reward', np.sum(rewards_episode), episode)
             writer.add_scalar('data_per_episode/replay_memory_size', len(replay_memory), episode)
             writer.add_scalar('data_per_episode/eps_exploration', eps_schedule.get_eps(), episode)
+            #save model
+            torch.save(Q.state_dict(), PATH_SAVE)
         phi_t = env.reset()
         phi_t = preprocess(phi_t)
         episode += 1
