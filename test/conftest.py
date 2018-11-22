@@ -1,6 +1,6 @@
 import pytest, gym, torch, random
 from wrapper_gym import KFrames
-from dql import preprocess, init_replay_memory
+from utils import preprocess, init_replay_memory
 
 @pytest.fixture('function') #invoked once per test function
 def env():

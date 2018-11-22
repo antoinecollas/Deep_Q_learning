@@ -1,5 +1,5 @@
 import torch
-from dql import preprocess
+from utils import preprocess
 
 def test_preprocessing(images):
     batch_size = images.shape[0]

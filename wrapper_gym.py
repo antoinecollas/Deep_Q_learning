@@ -1,7 +1,7 @@
 import gym, torch
 from gym import Wrapper
 import numpy as np
-from dql import Memory
+from memory import Memory
 
 class KFrames(Wrapper):
     """

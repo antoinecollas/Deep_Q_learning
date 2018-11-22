@@ -1,11 +1,14 @@
 import gym, torch, sys, copy, time, os
 from tqdm import tqdm
-from dql import *
-from wrapper_gym import KFrames
 import numpy as np
 from tensorboardX import SummaryWriter
 from torch.nn import SmoothL1Loss
 from torch.optim import RMSprop
+
+from wrapper_gym import KFrames
+from schedule import ScheduleExploration
+from utils import preprocess, action, get_training_data, init_replay_memory
+from cnn import CNN
 
 #SAVE/LOAD MODEL
 DIRECTORY_MODELS = './models/'
@@ -34,8 +37,8 @@ INITAL_EXPLORATION = 1
 FINAL_EXPLORATION = 0.1
 FINAL_EXPLORATION_FRAME = 1000000
 # FINAL_EXPLORATION_FRAME = 10000
-REPLAY_START_SIZE = 10000
-# REPLAY_START_SIZE = 1000
+# REPLAY_START_SIZE = 10000
+REPLAY_START_SIZE = 1000
 NO_OP_MAX = 30
 NB_TIMESTEPS = int(1e7) #hyperparameter used in openAI baselines implementation
 
@@ -50,7 +53,7 @@ print('see more details on tensorboard')
 
 done = True #reset environment
 eps_schedule = ScheduleExploration(INITAL_EXPLORATION, FINAL_EXPLORATION, FINAL_EXPLORATION_FRAME)
-Q = DQN(AGENT_HISTORY_LENGTH, NB_ACTIONS).to(device)
+Q = CNN(AGENT_HISTORY_LENGTH, NB_ACTIONS).to(device)
 Q_hat = copy.deepcopy(Q).to(device)
 loss = SmoothL1Loss()
 optimizer = RMSprop(Q.parameters(), lr=LEARNING_RATE)

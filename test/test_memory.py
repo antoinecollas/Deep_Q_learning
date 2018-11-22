@@ -1,5 +1,6 @@
 import pytest, random, gym, torch
-from dql import Memory, init_replay_memory
+from memory import Memory
+from utils import init_replay_memory
 
 def test_memory(steps_env):
     nb_steps = len(steps_env)

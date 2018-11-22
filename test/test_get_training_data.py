@@ -1,9 +1,10 @@
-from dql import DQN, get_training_data
+from cnn import CNN
+from utils import get_training_data
 import torch
 
 def test_get_training_data(replay_memory):
     nb_actions, nb_timesteps, replay_memory = replay_memory
-    Q_hat = DQN(agent_history_length=nb_timesteps, nb_actions=nb_actions)
+    Q_hat = CNN(agent_history_length=nb_timesteps, nb_actions=nb_actions)
     batch_size = 32
     phi_t_training, actions_training, y = get_training_data(Q_hat, replay_memory, batch_size, 0.99)
     assert type(phi_t_training) == torch.Tensor
