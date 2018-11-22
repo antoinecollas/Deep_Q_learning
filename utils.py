@@ -69,8 +69,11 @@ def preprocess(images, progress_bar=False):
         raise ValueError('tensor s dimension should be 4')    
     return preprocessed_images
 
-def action(phi_t, env, Q, eps_schedule):
-    eps = eps_schedule.step()
+def get_action(phi_t, env, Q, eps_schedule):
+    if type(eps_schedule) is float:
+        eps = eps_schedule
+    else:
+        eps = eps_schedule.step()
     flag_random_exploration = np.random.binomial(n=1, p=eps)
 
     if flag_random_exploration == 1:

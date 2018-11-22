@@ -7,7 +7,7 @@ from torch.optim import RMSprop
 
 from wrapper_gym import KFrames
 from schedule import ScheduleExploration
-from utils import preprocess, action, get_training_data, init_replay_memory
+from utils import preprocess, get_action, get_training_data, init_replay_memory
 from cnn import CNN
 
 #SAVE/LOAD MODEL
@@ -75,7 +75,7 @@ for timestep in tqdm(range(NB_TIMESTEPS)):#tqdm
         episode += 1
         rewards_episode = []
 
-    a_t = action(phi_t, env, Q, eps_schedule)
+    a_t = get_action(phi_t, env, Q, eps_schedule)
 
     phi_t_1, r_t, done, info = env.step(a_t)
     rewards_episode.append(r_t)

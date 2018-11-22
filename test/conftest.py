@@ -1,14 +1,22 @@
 import pytest, gym, torch, random
 from wrapper_gym import KFrames
 from utils import preprocess, init_replay_memory
+from cnn import CNN
+
+def pytest_namespace():
+    return {
+        'env_name': 'BreakoutNoFrameskip-v0',
+        'nb_actions': 4, #nb of actions of breakout
+        'agent_history_length': random.randint(1,10)
+    }
 
 @pytest.fixture('function') #invoked once per test function
 def env():
     '''
     Return (nb_timesteps, wrapper of gym env)
     '''
-    nb_timesteps = random.randint(1,10)
-    env = gym.make("BreakoutNoFrameskip-v0")
+    nb_timesteps = pytest.agent_history_length
+    env = gym.make(pytest.env_name)
     env = KFrames(env, history_length=nb_timesteps)
     return (nb_timesteps, env)
 
@@ -23,7 +31,7 @@ def images():
 @pytest.fixture('function') #invoked once per test function
 def preprocessed_images():
     '''
-    Generate batch of images of size: (1, timesteps, h, w)
+    Generate batch of images
     '''
     images = torch.rand(size=[random.randint(1,10), 4, 84, 84])
     return images
@@ -33,8 +41,8 @@ def steps_env():
     '''
     Generate steps of the environment: (1, timesteps, h, w)
     '''
-    nb_timesteps = random.randint(1,10)
-    env = gym.make("BreakoutNoFrameskip-v0")
+    nb_timesteps = pytest.agent_history_length
+    env = gym.make(pytest.env_name)
     env = KFrames(env, history_length=nb_timesteps)
     observations = []
     phi_t = preprocess(env.reset())
@@ -54,9 +62,20 @@ def replay_memory():
     '''
     Generate a filled replay_memory
     '''
-    nb_timesteps = random.randint(1,10)
-    nb_actions = 4 # because it is breakout game
-    env = gym.make("BreakoutNoFrameskip-v0")
+    nb_timesteps = pytest.agent_history_length
+    nb_actions = pytest.nb_actions
+    env = gym.make(pytest.env_name)
     env = KFrames(env, history_length=nb_timesteps)
     replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, print_info=False)
     return nb_actions, nb_timesteps, replay_memory
+
+@pytest.fixture('function') #invoked once per test function
+def Q():
+    '''
+    Generate a Q function
+    '''
+    agent_history_length = pytest.agent_history_length
+    nb_actions = pytest.nb_actions
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    Q = CNN(agent_history_length, nb_actions).to(device)
+    return Q
