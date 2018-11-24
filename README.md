@@ -14,3 +14,5 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
 - NATURE paper uses frames as unit in hyperparameters whereas this implementation uses episodes (or a mixture of both ??)
 - compare speed with openAI baselines
 - render and visualize some episodes
+- sometimes test_get_training_data.py failes
+- add gpu utilization in tensorboard (https://github.com/lanpa/tensorboardX/blob/master/examples/demo_nvidia_smi.py)
