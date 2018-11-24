@@ -37,6 +37,6 @@ def play(env, Q, nb_episodes=10, eps=0.1):
         episode_to_display = []
         for observation in episode:
             episode_to_display.append(observation[0])
-        episodes.append(np.stack(episode_to_display))
+        episodes.append(torch.stack(episode_to_display))
     
     return episodes

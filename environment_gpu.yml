@@ -22,3 +22,5 @@ dependencies:
   - git+https://github.com/openai/gym/
   - tensorboardX
   - pytest
+  - moviepy
+  - imageio

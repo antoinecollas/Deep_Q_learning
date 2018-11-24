@@ -9,6 +9,7 @@ from wrapper_gym import KFrames
 from schedule import ScheduleExploration
 from utils import preprocess, get_action, get_training_data, init_replay_memory
 from cnn import CNN
+from play import play
 
 #SAVE/LOAD MODEL
 DIRECTORY_MODELS = './models/'
@@ -37,8 +38,8 @@ INITAL_EXPLORATION = 1
 FINAL_EXPLORATION = 0.1
 FINAL_EXPLORATION_FRAME = 1000000
 # FINAL_EXPLORATION_FRAME = 10000
-# REPLAY_START_SIZE = 10000
-REPLAY_START_SIZE = 1000
+REPLAY_START_SIZE = 10000
+# REPLAY_START_SIZE = 1000
 NO_OP_MAX = 30
 NB_TIMESTEPS = int(1e7) #hyperparameter used in openAI baselines implementation
 
@@ -68,8 +69,14 @@ for timestep in tqdm(range(NB_TIMESTEPS)):#tqdm
             writer.add_scalar('data_per_episode/reward', np.sum(rewards_episode), episode)
             writer.add_scalar('data_per_episode/replay_memory_size', len(replay_memory), episode)
             writer.add_scalar('data_per_episode/eps_exploration', eps_schedule.get_eps(), episode)
+            if (episode%50 == 0):
+                demos = play(env, Q, nb_episodes=1, eps=0.1)
+                for demo in demos:
+                    demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
+                    writer.add_video('breakout', demo, timestep, fps=25)
             #save model
             torch.save(Q.state_dict(), PATH_SAVE)
+
         phi_t = env.reset()
         phi_t = preprocess(phi_t)
         episode += 1
