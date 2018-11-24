@@ -29,7 +29,7 @@ def play(env, Q, nb_episodes=10, eps=0.1):
         episode.append(observation)
         done = False
         while not done:
-            phi_t = preprocess(episode[len(episode)-1].to(device))
+            phi_t = preprocess(episode[len(episode)-1]).to(device)
             action = get_action(phi_t, env, Q, eps)
             observation, _, done, _ = env.step(action)
             episode.append(observation)
