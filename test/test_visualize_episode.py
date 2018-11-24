@@ -20,5 +20,4 @@ def test_play(env, Q):
 
 
     for i, episode in enumerate(episodes):
-        print(episode.shape)
-        imageio.mimwrite('./games/game_' + str(i) + '.mp4', episode, fps=25)
+        imageio.mimwrite('./test_games/game_' + str(i) + '.mp4', episode, fps=25)

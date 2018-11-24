@@ -1,4 +1,4 @@
 __pycache__/
 runs/*
 models/*
-games/*
+test_games/*
