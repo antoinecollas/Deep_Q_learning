@@ -73,7 +73,7 @@ for timestep in tqdm(range(NB_TIMESTEPS)):#tqdm
                 demos = play(env, Q, nb_episodes=1, eps=0.1)
                 for demo in demos:
                     demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
-                    writer.add_video('breakout', demo, timestep, fps=25)
+                    writer.add_video('breakout', demo, episode, fps=25)
             #save model
             torch.save(Q.state_dict(), PATH_SAVE)
 
