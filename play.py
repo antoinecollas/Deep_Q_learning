@@ -26,13 +26,13 @@ def play(env, Q, nb_episodes=10, eps=0.1):
     for i in range(nb_episodes):
         episode = list()
         observation = env.reset()
-        episode.append(torch.tensor(observation))
+        episode.append(observation)
         done = False
         while not done:
             phi_t = preprocess(episode[len(episode)-1].to(device))
             action = get_action(phi_t, env, Q, eps)
             observation, _, done, _ = env.step(action)
-            episode.append(torch.tensor(observation))
+            episode.append(observation)
         #we keep only the first frame of each observation
         episode_to_display = []
         for observation in episode:
