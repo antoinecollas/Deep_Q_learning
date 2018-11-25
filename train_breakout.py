@@ -74,10 +74,11 @@ for timestep in tqdm(range(NB_TIMESTEPS)):#tqdm
         if (episode%TENSORBOARD_FREQ == 0):
             assert len(mean_rewards_episodes) == TENSORBOARD_FREQ
             #tensorboard
-            writer.add_scalar('data_per_episode/reward', np.mean(mean_rewards_episodes), episode)
-            writer.add_scalar('data_per_episode/replay_memory_size', len(replay_memory), episode)
-            writer.add_scalar('data_per_episode/eps_exploration', eps_schedule.get_eps(), episode)
-            demos = play(env, Q, nb_episodes=1, eps=eps_schedule.get_eps())
+            writer.add_scalar('rewards/train_reward', np.mean(mean_rewards_episodes), episode)
+            writer.add_scalar('other/replay_memory_size', len(replay_memory), episode)
+            writer.add_scalar('other/eps_exploration', eps_schedule.get_eps(), episode)
+            demos, demo_rewards = play(env, Q, nb_episodes=1, eps=eps_schedule.get_eps())
+            writer.add_scalar('rewards/demo_reward', np.mean(demo_rewards), episode)
             for demo in demos:
                 demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
                 writer.add_video('breakout', demo, episode, fps=25)

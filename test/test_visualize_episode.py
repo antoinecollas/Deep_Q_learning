@@ -6,13 +6,14 @@ import imageio
 def test_play(env, Q):
     _, env = env
     NB_EPISODES = random.randint(1,5)
-    episodes = play(env, Q, NB_EPISODES)
+    episodes, rewards = play(env, Q, NB_EPISODES)
     
     assert type(episodes) is list
-    assert len(episodes) == NB_EPISODES
+    assert len(episodes) == len(rewards) == NB_EPISODES
     assert len(episodes[0].shape) == 4 #nb frames, h, w, c
-    for episode in episodes:
+    for episode, reward in zip(episodes, rewards):
         assert type(episode) is torch.Tensor
+        assert type(reward) is float
         assert episode.shape[-3] == 210 #h
         assert episode.shape[-2] == 160 #w
         assert episode.shape[-1] == 3 #c
