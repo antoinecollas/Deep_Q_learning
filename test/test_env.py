@@ -1,4 +1,4 @@
-import torch
+import torch, time
 
 def test_env(env):
     nb_timesteps, env = env
@@ -21,3 +21,26 @@ def test_env(env):
         assert observations.shape[-1] == 3 #nb color channels
         assert type(reward) is float
         assert type(done) is bool
+
+    #test reward
+    env.reset()
+    lives = 5
+    done = False
+    sum_rewards = 0
+    _, reward, done, info = env.step(1) # fire
+    while not done:
+        # env.render()
+        _, reward, done, info = env.step(3) # go to the left
+        sum_rewards += reward
+        # print(sum_rewards)
+        # time.sleep(0.2)
+        if (not done) and (info['ale.lives'] != lives):
+            _, reward, done, info = env.step(1) # fire
+            sum_rewards += reward
+            # print(sum_rewards)
+            # time.sleep(0.2)
+            lives -= 1
+    #     if done:
+    #         time.sleep(1)
+    # print(sum_rewards)
+    assert sum_rewards == 11 # 11 is the is the score printed in the game (printed with env.render())

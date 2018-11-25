@@ -19,7 +19,6 @@ class KFrames(Wrapper):
         - an array of the observation duplicated history_length times.
         '''
         self.observations = Memory(self.history_length)
-        self.rewards = Memory(self.history_length)
         self.done = False
         #we duplicate the first frame in order to have history_length frames
         observation = torch.tensor(self.env.reset())
@@ -37,8 +36,9 @@ class KFrames(Wrapper):
             - last info
         '''
         assert not self.done
+
+        sum_rewards = 0
         j = 0
-        sum_rewards = 0.0
         while (not self.done) and (j < self.skip_frames):
             observation, reward, self.done, info = self.env.step(action)
             sum_rewards += reward
@@ -48,17 +48,9 @@ class KFrames(Wrapper):
             observation, reward, self.done, info = self.env.step(action)
             sum_rewards += reward
             self.observations.push(torch.tensor(observation))
-            self.rewards.push(sum_rewards)
-
-            total_sum_rewards = 0.0
-            for i in range(len(self.rewards)):
-                total_sum_rewards += self.rewards[i]
-            
-        else:
-            total_sum_rewards = 0.0
 
         observations = torch.stack(list(self.observations.replay_memory))
-        return observations, total_sum_rewards, self.done, info
+        return observations, sum_rewards, self.done, info
     
     def render(self):
         super().render()

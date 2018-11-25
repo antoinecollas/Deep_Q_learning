@@ -5,9 +5,9 @@ from cnn import CNN
 
 def pytest_namespace():
     return {
-        'env_name': 'BreakoutNoFrameskip-v0',
+        'env_name': 'BreakoutDeterministic-v4',
         'nb_actions': 4, #nb of actions of breakout
-        'agent_history_length': random.randint(1,10)
+        'agent_history_length': random.randint(1,5)
     }
 
 @pytest.fixture('function') #invoked once per test function
