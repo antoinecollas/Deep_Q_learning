@@ -62,19 +62,20 @@ loss = SmoothL1Loss()
 optimizer = RMSprop(Q.parameters(), lr=LEARNING_RATE)
 
 episode = 1
-rewards_episode, mean_rewards_episodes = list(), Memory(TENSORBOARD_FREQ)
+rewards_episode, total_reward_per_episode = list(), list()
 for timestep in tqdm(range(NB_TIMESTEPS)):#tqdm
     #if an episode is ended
     if done:
-        mean_rewards_episodes.push(np.sum(rewards_episode))
+        total_reward_per_episode.append(np.sum(rewards_episode))
+        rewards_episode = list()
         phi_t = env.reset()
         phi_t = preprocess(phi_t)
-        rewards_episode = list()
 
         if (episode%TENSORBOARD_FREQ == 0):
-            assert len(mean_rewards_episodes) == TENSORBOARD_FREQ
+            assert len(total_reward_per_episode) == TENSORBOARD_FREQ
             #tensorboard
-            writer.add_scalar('rewards/train_reward', np.mean(mean_rewards_episodes), episode)
+            writer.add_scalar('rewards/train_reward', np.mean(total_reward_per_episode), episode)
+            total_reward_per_episode = list()
             writer.add_scalar('other/replay_memory_size', len(replay_memory), episode)
             writer.add_scalar('other/eps_exploration', eps_schedule.get_eps(), episode)
             demos, demo_rewards = play(env, Q, nb_episodes=1, eps=eps_schedule.get_eps())
