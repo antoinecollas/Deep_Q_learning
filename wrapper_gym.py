@@ -60,6 +60,5 @@ class KFrames(Wrapper):
         observations = torch.stack(list(self.observations.replay_memory))
         return observations, total_sum_rewards, self.done, info
     
-    def render():
-        raise NotImplementedError
-        
+    def render(self):
+        super().render()
