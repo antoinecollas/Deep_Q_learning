@@ -89,16 +89,14 @@ def get_training_data(Q_hat, replay_memory, batch_size, discount_factor):
     device = next(Q_hat.parameters()).device #we assume all parameters are on a same device
     y = torch.zeros([batch_size]).to(device)
     transitions_training = replay_memory.sample(batch_size)
-    phi_t_training = []
-    actions_training = []
-    phi_t_1_training = []
+    phi_t_training, actions_training, phi_t_1_training = [], [], []
     for j in range(len(transitions_training)):
         phi_t_training.append(transitions_training[j][0])
         actions_training.append(transitions_training[j][1])
         phi_t_1_training.append(transitions_training[j][3])
 
     phi_t_training = torch.squeeze(torch.stack(phi_t_training))
-    phi_t_1_training = torch.squeeze(torch.stack(phi_t_1_training)).to(device)
+    phi_t_1_training = torch.squeeze(torch.stack(phi_t_1_training), 1).to(device)
     Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
     for j in range(len(transitions_training)):
         episode_terminates = transitions_training[j][4]
