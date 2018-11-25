@@ -10,6 +10,7 @@ from schedule import ScheduleExploration
 from utils import preprocess, get_action, get_training_data, init_replay_memory
 from cnn import CNN
 from play import play
+from memory import Memory
 
 #SAVE/LOAD MODEL
 DIRECTORY_MODELS = './models/'
@@ -42,6 +43,7 @@ REPLAY_START_SIZE = 10000
 # REPLAY_START_SIZE = 1000
 NO_OP_MAX = 30
 NB_TIMESTEPS = int(1e7) #hyperparameter used in openAI baselines implementation
+TENSORBOARD_FREQ = 50
 
 NB_ACTIONS = 4
 env = gym.make("BreakoutNoFrameskip-v0")
@@ -59,28 +61,30 @@ Q_hat = copy.deepcopy(Q).to(device)
 loss = SmoothL1Loss()
 optimizer = RMSprop(Q.parameters(), lr=LEARNING_RATE)
 
-episode = 0
-rewards_episode = []
+episode = 1
+rewards_episode, mean_rewards_episodes = list(), Memory(TENSORBOARD_FREQ)
 for timestep in tqdm(range(NB_TIMESTEPS)):#tqdm
     #if an episode is ended
     if done:
-        if (episode%10 == 0) and (len(rewards_episode)>0):
+        mean_rewards_episodes.push(np.sum(rewards_episode))
+        phi_t = env.reset()
+        phi_t = preprocess(phi_t)
+        rewards_episode = list()
+
+        if (episode%TENSORBOARD_FREQ == 0):
+            assert len(mean_rewards_episodes) == TENSORBOARD_FREQ
             #tensorboard
-            writer.add_scalar('data_per_episode/reward', np.sum(rewards_episode), episode)
+            writer.add_scalar('data_per_episode/reward', np.mean(mean_rewards_episodes), episode)
             writer.add_scalar('data_per_episode/replay_memory_size', len(replay_memory), episode)
             writer.add_scalar('data_per_episode/eps_exploration', eps_schedule.get_eps(), episode)
-            if (episode%50 == 0):
-                demos = play(env, Q, nb_episodes=1, eps=0.1)
-                for demo in demos:
-                    demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
-                    writer.add_video('breakout', demo, episode, fps=25)
+            demos = play(env, Q, nb_episodes=1, eps=eps_schedule.get_eps())
+            for demo in demos:
+                demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
+                writer.add_video('breakout', demo, episode, fps=25)
             #save model
             torch.save(Q.state_dict(), PATH_SAVE)
 
-        phi_t = env.reset()
-        phi_t = preprocess(phi_t)
         episode += 1
-        rewards_episode = []
 
     a_t = get_action(phi_t, env, Q, eps_schedule)
 
