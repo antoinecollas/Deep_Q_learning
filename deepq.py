@@ -63,7 +63,6 @@ def train_deepq(
     for timestep in tqdm(range(nb_timesteps)):#tqdm
         #if an episode is ended
         if done:
-            print(episode)
             total_reward_per_episode.append(np.sum(rewards_episode))
             rewards_episode = list()
             phi_t = env.reset()
