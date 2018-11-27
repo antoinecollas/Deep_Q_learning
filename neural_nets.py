@@ -24,3 +24,17 @@ class CNN(nn.Module):
        x = self.l1(x)
        x = self.l2(x)
        return x
+
+class MLP(nn.Module):
+    def __init__(self, obs_space, nb_actions):
+        super(MLP, self).__init__()
+        self.mlp = nn.Sequential(
+            nn.Linear(in_features=obs_space, out_features=128),
+            # nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Linear(in_features=128, out_features=nb_actions),
+        )
+
+    def forward(self, x):
+        x = self.mlp(x)
+        return x

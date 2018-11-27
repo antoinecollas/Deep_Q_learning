@@ -8,9 +8,9 @@
 #     Q.load_state_dict(torch.load(PATH_LOAD))
 import copy, torch
 import numpy as np
-from utils import preprocess, get_action
+from utils import get_action
 
-def play(env, Q, nb_episodes=10, eps=0.1):
+def play(env, Q, preprocess_fn=None, nb_episodes=10, eps=0.1):
     '''
     Input:
         - environment (the environment is copied, so it is not modified)
@@ -29,7 +29,10 @@ def play(env, Q, nb_episodes=10, eps=0.1):
         episode.append(observation)
         done = False
         while not done:
-            phi_t = preprocess(episode[len(episode)-1]).to(device)
+            if preprocess_fn:
+                phi_t = preprocess_fn(episode[len(episode)-1]).to(device)
+            else:
+                phi_t = episode[len(episode)-1]
             action = get_action(phi_t, env, Q, eps)
             observation, reward, done, _ = env.step(action)
             episode.append(observation)

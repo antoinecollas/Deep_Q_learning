@@ -1,4 +1,4 @@
-from cnn import CNN
+from neural_nets import CNN
 from utils import get_training_data
 import torch
 

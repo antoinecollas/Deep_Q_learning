@@ -2,11 +2,12 @@ import random, torch
 from play import play
 import matplotlib.pyplot as plt
 import imageio
+from utils import preprocess
 
 def test_play(env, Q):
     _, env = env
     NB_EPISODES = random.randint(1,5)
-    episodes, rewards = play(env, Q, NB_EPISODES)
+    episodes, rewards = play(env, Q, preprocess, NB_EPISODES)
     
     assert type(episodes) is list
     assert len(episodes) == len(rewards) == NB_EPISODES

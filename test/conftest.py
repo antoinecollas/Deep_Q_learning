@@ -1,7 +1,7 @@
 import pytest, gym, torch, random
 from wrapper_gym import KFrames
 from utils import preprocess, init_replay_memory
-from cnn import CNN
+from neural_nets import CNN
 
 def pytest_namespace():
     return {
@@ -66,7 +66,7 @@ def replay_memory():
     nb_actions = pytest.nb_actions
     env = gym.make(pytest.env_name)
     env = KFrames(env, history_length=nb_timesteps)
-    replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, print_info=False)
+    replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, preprocess_fn=preprocess, print_info=False)
     return nb_actions, nb_timesteps, replay_memory
 
 @pytest.fixture('function') #invoked once per test function

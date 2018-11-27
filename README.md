@@ -11,8 +11,13 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
 - replace mean reward by sum of rewards (OK)
 - increase batch size (OK)
 - print less and store less in tensorboard (10x less) (OK)
+- sometimes test_get_training_data.py failes (OK)
+- render and visualize some episodes (OK)
 - NATURE paper uses frames as unit in hyperparameters whereas this implementation uses episodes (or a mixture of both ??)
+- improve modularity:
+    - create train function (OK)
+    - create file that uses this function to train breakout (OK)
+    - put a unit test on a dummy game (ex: https://github.com/asrivat1/DeepLearningVideoGames/blob/master/Wrapped%20Game%20Code/dummy_game.py) or deterministic breakout
+    - put an example with cartpole (which seems to be easier to train than breakout)
 - compare speed with openAI baselines
-- render and visualize some episodes
-- sometimes test_get_training_data.py failes
 - add gpu utilization in tensorboard (https://github.com/lanpa/tensorboardX/blob/master/examples/demo_nvidia_smi.py)

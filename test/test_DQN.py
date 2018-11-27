@@ -1,5 +1,5 @@
 import torch
-from cnn import CNN
+from neural_nets import CNN
 
 def test_CNN(preprocessed_images):
     batch_size = preprocessed_images.shape[0]

@@ -6,7 +6,7 @@ import random
 import numpy as np
 from memory import Memory
 
-def init_replay_memory(env, replay_memory_size, replay_start_size, print_info=True):
+def init_replay_memory(env, replay_memory_size, replay_start_size, preprocess_fn=None, print_info=True):
     '''
     a uniform random policy is run for a number of steps and the resulting experience is used to populate replay memory
     Returns:
@@ -25,10 +25,12 @@ def init_replay_memory(env, replay_memory_size, replay_start_size, print_info=Tr
         #if an episode is ended
         if done:
             phi_t = env.reset()
-            phi_t = preprocess(phi_t)
+            if preprocess_fn:
+                phi_t = preprocess_fn(phi_t)
         a_t = env.action_space.sample() #random action
         phi_t_1, r_t, done, info = env.step(a_t)
-        phi_t_1 = preprocess(phi_t_1)
+        if preprocess_fn:
+            phi_t_1 = preprocess_fn(phi_t_1)
         replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
         phi_t = phi_t_1
 
@@ -83,7 +85,7 @@ def get_action(phi_t, env, Q, eps_schedule):
         phi_t = phi_t.to(device)
         a_t = torch.argmax(Q(phi_t), dim=1)
     
-    return a_t
+    return int(a_t)
 
 def get_training_data(Q_hat, replay_memory, batch_size, discount_factor):
     device = next(Q_hat.parameters()).device #we assume all parameters are on a same device
