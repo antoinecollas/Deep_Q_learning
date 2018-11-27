@@ -8,7 +8,7 @@ from memory import Memory
 
 def init_replay_memory(env, replay_memory_size, replay_start_size, print_info=True):
     '''
-    a uniform random policy is run for a number of frames and the resulting experience is used to populate replay memory
+    a uniform random policy is run for a number of steps and the resulting experience is used to populate replay memory
     Returns:
     - replay_memory
     '''
