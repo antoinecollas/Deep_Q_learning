@@ -17,7 +17,7 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
 - improve modularity:
     - create train function (OK)
     - create file that uses this function to train breakout (OK)
-    - put a unit test on a dummy game (ex: https://github.com/asrivat1/DeepLearningVideoGames/blob/master/Wrapped%20Game%20Code/dummy_game.py) or deterministic breakout
-    - put an example with cartpole (which seems to be easier to train than breakout)
+    - put an example with cartpole (which seems to be easier to train than breakout) (OK)
+- colors are inverted in tensorboard
 - compare speed with openAI baselines
 - add gpu utilization in tensorboard (https://github.com/lanpa/tensorboardX/blob/master/examples/demo_nvidia_smi.py)
