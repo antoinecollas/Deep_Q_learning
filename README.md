@@ -18,6 +18,7 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
     - create train function (OK)
     - create file that uses this function to train breakout (OK)
     - put an example with cartpole (which seems to be easier to train than breakout) (OK)
+- add unit test on load/save with cartpole
 - colors are inverted in tensorboard
 - compare speed with openAI baselines
 - add gpu utilization in tensorboard (https://github.com/lanpa/tensorboardX/blob/master/examples/demo_nvidia_smi.py)
