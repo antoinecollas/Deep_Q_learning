@@ -1,7 +1,7 @@
 import pytest, gym, torch, random
-from wrapper_gym import KFrames
-from utils import preprocess, init_replay_memory
-from neural_nets import CNN
+from deepq.wrapper_gym import KFrames
+from deepq.utils import preprocess, init_replay_memory
+from deepq.neural_nets import CNN
 
 def pytest_namespace():
     return {

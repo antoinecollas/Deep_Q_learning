@@ -1,5 +1,5 @@
-from neural_nets import CNN
-from utils import get_training_data
+from deepq.neural_nets import CNN
+from deepq.utils import get_training_data
 import torch
 
 def test_get_training_data(replay_memory):

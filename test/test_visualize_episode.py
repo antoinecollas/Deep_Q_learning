@@ -1,8 +1,8 @@
 import random, torch
-from play import play
+from deepq.play import play
 import matplotlib.pyplot as plt
 import imageio
-from utils import preprocess
+from deepq.utils import preprocess
 
 def test_play(env, Q):
     _, env = env

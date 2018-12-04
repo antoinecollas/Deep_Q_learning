@@ -1,5 +1,5 @@
 import torch
-from utils import preprocess
+from deepq.utils import preprocess
 
 def test_preprocessing(images):
     batch_size = images.shape[0]

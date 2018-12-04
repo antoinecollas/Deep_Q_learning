@@ -1,6 +1,6 @@
 import pytest, random, gym, torch
-from memory import Memory
-from utils import init_replay_memory
+from deepq.memory import Memory
+from deepq.utils import init_replay_memory
 
 def test_memory(steps_env):
     nb_steps = len(steps_env)

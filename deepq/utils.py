@@ -4,7 +4,7 @@ from torchvision.transforms import Compose, ToPILImage, Lambda, Resize, Grayscal
 from collections import deque
 import random 
 import numpy as np
-from memory import Memory
+from deepq.memory import Memory
 
 def init_replay_memory(env, replay_memory_size, replay_start_size, preprocess_fn=None, print_info=True):
     '''

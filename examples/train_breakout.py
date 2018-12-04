@@ -1,8 +1,8 @@
 import gym
-from wrapper_gym import KFrames
-from deepq import train_deepq
-from neural_nets import CNN
-from utils import preprocess
+from deepq.wrapper_gym import KFrames
+from deepq.deepq import train_deepq
+from deepq.neural_nets import CNN
+from deepq.utils import preprocess
 
 AGENT_HISTORY_LENGTH = 4
 NB_ACTIONS = 4

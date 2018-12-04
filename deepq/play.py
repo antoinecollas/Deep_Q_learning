@@ -8,7 +8,7 @@
 #     Q.load_state_dict(torch.load(PATH_LOAD))
 import copy, torch
 import numpy as np
-from utils import get_action
+from deepq.utils import get_action
 
 def play(env, Q, preprocess_fn=None, nb_episodes=10, eps=0.1):
     '''

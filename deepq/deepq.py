@@ -5,12 +5,12 @@ from tensorboardX import SummaryWriter
 from torch.nn import SmoothL1Loss
 from torch.optim import RMSprop
 
-from wrapper_gym import KFrames
-from schedule import ScheduleExploration
-from utils import get_action, get_training_data, init_replay_memory
-from neural_nets import CNN
-from play import play
-from memory import Memory
+from deepq.wrapper_gym import KFrames
+from deepq.schedule import ScheduleExploration
+from deepq.utils import get_action, get_training_data, init_replay_memory
+from deepq.neural_nets import CNN
+from deepq.play import play
+from deepq.memory import Memory
 
 def train_deepq(
     env,

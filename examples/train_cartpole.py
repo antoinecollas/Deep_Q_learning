@@ -1,7 +1,7 @@
 import gym
-from wrapper_gym import KFrames
-from deepq import train_deepq
-from neural_nets import MLP
+from deepq.wrapper_gym import KFrames
+from deepq.deepq import train_deepq
+from deepq.neural_nets import MLP
 
 AGENT_HISTORY_LENGTH = 1
 OBS_SPACE = 4
