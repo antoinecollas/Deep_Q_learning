@@ -16,5 +16,6 @@ train_deepq(
     nb_actions=NB_ACTIONS,
     Q_network=Q_network,
     preprocess_fn=preprocess,
+    tensorboard_freq=5,
     demo_tensorboard=True,
     )
