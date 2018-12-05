@@ -20,4 +20,4 @@ class ScheduleExploration():
         return res
     
     def get_eps(self):
-        return self.eps
+        return float(self.eps)

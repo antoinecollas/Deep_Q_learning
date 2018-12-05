@@ -13,6 +13,7 @@ from deepq.play import play
 from deepq.memory import Memory
 
 def train_deepq(
+    name,
     env,
     nb_actions,
     Q_network,
@@ -23,7 +24,7 @@ def train_deepq(
     agent_history_length=4,
     target_network_update_frequency=10000,
     discount_factor=0.99,
-    learning_rate=2.5*1e-4,
+    learning_rate=1e-5,
     update_frequency=4,
     inital_exploration=1,
     final_exploration=0.1,
@@ -37,14 +38,14 @@ def train_deepq(
     DIRECTORY_MODELS = './models/'
     if not os.path.exists(DIRECTORY_MODELS):
         os.makedirs(DIRECTORY_MODELS)
-    PATH_SAVE = DIRECTORY_MODELS + time.strftime('%Y%m%d-%H%M')
+    PATH_SAVE = DIRECTORY_MODELS + name + '_' + time.strftime('%Y%m%d-%H%M')
 
     #GPU/CPU
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('RUNNING ON', device)
 
     #TENSORBOARDX
-    writer = SummaryWriter()
+    writer = SummaryWriter(comment=name)
 
     replay_memory = init_replay_memory(env, replay_memory_size, replay_start_size, preprocess_fn)
 
@@ -81,7 +82,7 @@ def train_deepq(
                     writer.add_scalar('rewards/demo_reward', np.mean(demo_rewards), episode)
                     for demo in demos:
                         demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
-                        writer.add_video('breakout', demo, episode, fps=25)
+                        writer.add_video(name, demo, episode, fps=25)
                 
                 #save model
                 torch.save(Q_network.state_dict(), PATH_SAVE)

@@ -18,7 +18,8 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
     - create train function (OK)
     - create file that uses this function to train breakout (OK)
     - put an example with cartpole (which seems to be easier to train than breakout) (OK)
-- organize repo
+- organize repo (OK)
+- parallelize environment: do 4 environments in parallel in order to update every step and not every 4 steps.
 - add unit test on load/save with cartpole
 - colors are inverted in tensorboard
 - compare speed with openAI baselines
