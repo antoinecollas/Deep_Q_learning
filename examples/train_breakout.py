@@ -16,5 +16,7 @@ train_deepq(
     nb_actions=NB_ACTIONS,
     Q_network=Q_network,
     preprocess_fn=preprocess,
+    replay_start_size=250000,
+    replay_memory_size=250000,
     demo_tensorboard=True,
     )
