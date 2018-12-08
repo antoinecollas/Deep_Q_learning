@@ -20,6 +20,7 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
     - put an example with cartpole (which seems to be easier to train than breakout) (OK)
 - organize repo (OK)
 - update memory unittest
+- test new memory with GPU
 - parallelize environment: do 4 environments in parallel in order to update every step and not every 4 steps.
 - add unit test on load/save with cartpole
 - colors are inverted in tensorboard
