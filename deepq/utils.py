@@ -2,9 +2,9 @@ import torch
 from tqdm import tqdm
 from torchvision.transforms import Compose, ToPILImage, Lambda, Resize, Grayscale, ToTensor
 from collections import deque
-import random 
+import random
 import numpy as np
-from deepq.memory import Memory
+from deepq.memory import ExpReplay
 
 def init_replay_memory(env, replay_memory_size, replay_start_size, preprocess_fn=None, print_info=True):
     '''
@@ -12,7 +12,7 @@ def init_replay_memory(env, replay_memory_size, replay_start_size, preprocess_fn
     Returns:
     - replay_memory
     '''
-    replay_memory = Memory(replay_memory_size)
+    replay_memory = ExpReplay(replay_memory_size)
     done = True
 
     if print_info:
@@ -64,8 +64,6 @@ def preprocess(images, progress_bar=False):
                 preprocessed_images.append(transformations(images[i]))
         preprocessed_images = torch.stack(preprocessed_images).squeeze()
         preprocessed_images = torch.unsqueeze(preprocessed_images, 0)
-        if len(preprocessed_images.shape) < 4:
-            preprocessed_images = torch.unsqueeze(preprocessed_images, 0)
 
     else:
         raise ValueError('tensor s dimension should be 4')    
@@ -91,20 +89,10 @@ def get_training_data(Q_hat, replay_memory, batch_size, discount_factor):
     device = next(Q_hat.parameters()).device #we assume all parameters are on a same device
     y = torch.zeros([batch_size]).to(device)
     transitions_training = replay_memory.sample(batch_size)
-    phi_t_training, actions_training, phi_t_1_training = [], [], []
-    for j in range(len(transitions_training)):
-        phi_t_training.append(transitions_training[j][0])
-        actions_training.append(transitions_training[j][1])
-        phi_t_1_training.append(transitions_training[j][3])
-
-    phi_t_training = torch.squeeze(torch.stack(phi_t_training))
-    phi_t_1_training = torch.squeeze(torch.stack(phi_t_1_training), 1).to(device)
+    phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = transitions_training
+    phi_t_1_training.to(device)
     Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
-    for j in range(len(transitions_training)):
-        episode_terminates = transitions_training[j][4]
-        if episode_terminates:
-            y[j] = transitions_training[j][2]
-        else:
-            y[j] = transitions_training[j][2] + discount_factor * Q_hat_values[j]
+    mask = torch.ones(episode_terminates.shape) - episode_terminates
+    y = y + discount_factor*Q_hat_values*mask
     y = y.detach() #we don't want to compute gradients on target variables
     return phi_t_training, actions_training, y

@@ -10,7 +10,7 @@ def test_get_training_data(replay_memory):
     assert type(phi_t_training) == torch.Tensor
     assert phi_t_training.shape[0] == batch_size
     
-    assert type(actions_training) == list
+    assert type(actions_training) == torch.Tensor
     for action in actions_training:
         assert action < nb_actions
         assert action >= 0

@@ -7,3 +7,5 @@ test_games/*
 build/*
 dist/*
 dql.egg-info/*
+
+*.prof

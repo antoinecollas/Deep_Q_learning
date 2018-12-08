@@ -10,7 +10,6 @@ from deepq.schedule import ScheduleExploration
 from deepq.utils import get_action, get_training_data, init_replay_memory
 from deepq.neural_nets import CNN
 from deepq.play import play
-from deepq.memory import Memory
 
 def train_deepq(
     name,
@@ -107,8 +106,7 @@ def train_deepq(
             phi_t_training = phi_t_training.to(device)
             Q_values = Q_network(phi_t_training)
             mask = torch.zeros([batch_size, nb_actions]).to(device)
-            for j in range(len(actions_training)):
-                mask[j, actions_training[j]] = 1
+            mask.scatter_(1, actions_training.unsqueeze(1), 1.0)
             Q_values = Q_values * mask
             Q_values = torch.sum(Q_values, dim=1)
             output = loss(Q_values, y)
