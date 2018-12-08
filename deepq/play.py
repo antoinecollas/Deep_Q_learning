@@ -1,11 +1,3 @@
-# LOAD = False
-# if LOAD:
-#     list_of_files = glob.glob(DIRECTORY_MODELS)
-#     PATH_LOAD = max(list_of_files, key=os.path.getctime) #LOAD lastest created file
-    
-# if LOAD:
-#     print('Load model:', PATH_LOAD)
-#     Q.load_state_dict(torch.load(PATH_LOAD))
 import copy, torch
 import numpy as np
 from deepq.utils import get_action
