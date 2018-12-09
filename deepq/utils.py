@@ -91,7 +91,7 @@ def get_training_data(Q_hat, replay_memory, batch_size, discount_factor):
     phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = transitions_training
     phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = phi_t_training.to(device), actions_training.to(device), y.to(device), phi_t_1_training.to(device), episode_terminates.to(device)
     Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
-    mask = torch.ones(episode_terminates.shape) - episode_terminates
+    mask = torch.ones(episode_terminates.shape).to(device) - episode_terminates
     y = y + discount_factor*Q_hat_values*mask
     y = y.detach() #we don't want to compute gradients on target variables
     return phi_t_training, actions_training, y
