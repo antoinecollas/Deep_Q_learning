@@ -59,7 +59,7 @@ def train_deepq(
     optimizer = RMSprop(Q_network.parameters(), lr=learning_rate, alpha=0.95, eps=0.01, centered=True)
 
     episode = 1
-    rewards_episode, total_reward_per_episode = list(), list()
+    rewards_episode, total_reward_per_episode, total_loss = list(), list(), list()
     for timestep in tqdm(range(nb_timesteps)):#tqdm
         #if an episode is ended
         if done:
@@ -73,7 +73,8 @@ def train_deepq(
                 assert len(total_reward_per_episode) == tensorboard_freq
                 #tensorboard
                 writer.add_scalar('rewards/train_reward', np.mean(total_reward_per_episode), episode)
-                total_reward_per_episode = list()
+                writer.add_scalar('loss/train_loss', np.mean(total_loss), episode)
+                total_reward_per_episode, total_loss = list(), list()
                 writer.add_scalar('other/replay_memory_size', len(replay_memory), episode)
                 writer.add_scalar('other/eps_exploration', eps_schedule.get_eps(), episode)
                 if demo_tensorboard:
@@ -110,6 +111,7 @@ def train_deepq(
             Q_values = Q_values * mask
             Q_values = torch.sum(Q_values, dim=1)
             output = loss(Q_values, y)
+            total_loss.append(float(output))
 
             #backward and gradient descent
             optimizer.zero_grad()
