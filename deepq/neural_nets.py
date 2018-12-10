@@ -18,6 +18,9 @@ class CNN(nn.Module):
         self.l1 = nn.Linear(in_features=3136, out_features=512)
         self.l2 = nn.Linear(in_features=512, out_features=nb_actions)
 
+    def count_parameters(self):
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
     def forward(self, x):
        x = self.conv(x)
        x = x.view(x.shape[0], -1)
@@ -34,6 +37,9 @@ class MLP(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(in_features=128, out_features=nb_actions),
         )
+
+    def count_parameters(self):
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
     def forward(self, x):
         x = self.mlp(x)

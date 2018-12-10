@@ -55,6 +55,7 @@ def train_deepq(
     done = True #reset environment
     eps_schedule = ScheduleExploration(inital_exploration, final_exploration, final_exploration_step)
     Q_network = Q_network.to(device)
+    print('Number of trainable parameters:', Q_network.count_parameters())
     Q_hat = copy.deepcopy(Q_network).to(device)
     loss = SmoothL1Loss()
     optimizer = RMSprop(Q_network.parameters(), lr=learning_rate, alpha=0.95, eps=0.01, centered=True)
