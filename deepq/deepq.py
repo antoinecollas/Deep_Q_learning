@@ -14,7 +14,6 @@ from deepq.play import play
 def train_deepq(
     name,
     env,
-    nb_actions,
     Q_network,
     preprocess_fn=None,
     batch_size=32,
@@ -32,6 +31,8 @@ def train_deepq(
     tensorboard_freq=50,
     demo_tensorboard=False
     ):
+
+    nb_actions = env.action_space.n
 
     #SAVE/LOAD MODEL
     DIRECTORY_MODELS = './models/'
