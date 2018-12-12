@@ -13,7 +13,7 @@ train_deepq(
     env=env,
     name='Pong',
     Q_network=Q_network,
+    input_images=True,
     preprocess_fn=preprocess,
     tensorboard_freq=5,
-    demo_tensorboard=True,
     )

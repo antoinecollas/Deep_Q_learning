@@ -22,11 +22,11 @@ class CNN(nn.Module):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
     def forward(self, x):
-       x = self.conv(x)
-       x = x.view(x.shape[0], -1)
-       x = self.l1(x)
-       x = self.l2(x)
-       return x
+        x = self.conv(x.permute(0,3,1,2))
+        x = x.view(x.shape[0], -1)
+        x = self.l1(x)
+        x = self.l2(x)
+        return x
 
 class MLP(nn.Module):
     def __init__(self, obs_space, nb_actions):

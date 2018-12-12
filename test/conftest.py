@@ -6,8 +6,8 @@ from deepq.neural_nets import CNN
 def pytest_namespace():
     return {
         'env_name': 'BreakoutDeterministic-v4',
-        'nb_actions': 4, #nb of actions of breakout
-        'agent_history_length': random.randint(1,5)
+        'agent_history_length': 4
+        # 'agent_history_length': random.randint(1,5)
     }
 
 @pytest.fixture('function') #invoked once per test function
@@ -25,7 +25,8 @@ def images():
     '''
     Generate batch of images of size: (bs, h, w, c)
     '''
-    images = torch.rand(size=[random.randint(1,10), 300, 200, 3])
+    agent_history_length = pytest.agent_history_length
+    images = torch.rand(size=[agent_history_length, 300, 200, 3])
     return images
 
 @pytest.fixture('function') #invoked once per test function
@@ -33,7 +34,8 @@ def preprocessed_images():
     '''
     Generate batch of images
     '''
-    images = torch.rand(size=[random.randint(1,10), 4, 84, 84])
+    bs = 5
+    images = torch.rand(size=[bs, 84, 84, pytest.agent_history_length])
     return images
 
 @pytest.fixture('function') #invoked once per test function
@@ -63,10 +65,10 @@ def replay_memory():
     Generate a filled replay_memory
     '''
     nb_timesteps = pytest.agent_history_length
-    nb_actions = pytest.nb_actions
     env = gym.make(pytest.env_name)
+    nb_actions = env.action_space.n
     env = KFrames(env, history_length=nb_timesteps)
-    replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, preprocess_fn=preprocess, print_info=False)
+    replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, input_images=True, preprocess_fn=preprocess, print_info=False)
     return nb_actions, nb_timesteps, replay_memory
 
 @pytest.fixture('function') #invoked once per test function
@@ -75,7 +77,7 @@ def Q():
     Generate a Q function
     '''
     agent_history_length = pytest.agent_history_length
-    nb_actions = pytest.nb_actions
+    nb_actions = gym.make(pytest.env_name).action_space.n
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     Q = CNN(agent_history_length, nb_actions).to(device)
     return Q

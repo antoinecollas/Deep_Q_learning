@@ -5,8 +5,8 @@ import imageio
 from deepq.utils import preprocess
 
 def test_play(env, Q):
-    _, env = env
-    NB_EPISODES = random.randint(1,5)
+    agent_history_length, env = env
+    NB_EPISODES = 2
     episodes, rewards = play(env, Q, preprocess, NB_EPISODES)
     
     assert type(episodes) is list
@@ -19,6 +19,5 @@ def test_play(env, Q):
         assert episode.shape[-2] == 160 #w
         assert episode.shape[-1] == 3 #c
 
-
     for i, episode in enumerate(episodes):
-        imageio.mimwrite('./test_games/game_' + str(i) + '.mp4', episode.numpy(), fps=25)
+        imageio.mimwrite('./test_games/game_' + str(i) + '.mp4', episode.numpy(), fps=25//agent_history_length)

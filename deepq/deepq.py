@@ -7,7 +7,7 @@ from torch.optim import RMSprop
 
 from deepq.wrapper_gym import KFrames
 from deepq.schedule import ScheduleExploration
-from deepq.utils import get_action, get_training_data, init_replay_memory
+from deepq.utils import eps_greedy_action, get_training_data, init_replay_memory, write_to_tensorboard
 from deepq.neural_nets import CNN
 from deepq.play import play
 
@@ -15,6 +15,7 @@ def train_deepq(
     name,
     env,
     Q_network,
+    input_images,
     preprocess_fn=None,
     batch_size=32,
     replay_start_size=50000,
@@ -29,7 +30,6 @@ def train_deepq(
     final_exploration_step=int(1e6),
     nb_timesteps=int(1e7),
     tensorboard_freq=50,
-    demo_tensorboard=False
     ):
 
     nb_actions = env.action_space.n
@@ -47,7 +47,7 @@ def train_deepq(
     #TENSORBOARDX
     writer = SummaryWriter(comment=name)
 
-    replay_memory = init_replay_memory(env, replay_memory_size, replay_start_size, preprocess_fn)
+    replay_memory = init_replay_memory(env, replay_memory_size, replay_start_size, input_images, preprocess_fn)
 
     print('#### TRAINING ####')
     print('see more details on tensorboard')
@@ -65,33 +65,34 @@ def train_deepq(
     for timestep in tqdm(range(nb_timesteps)):#tqdm
         #if an episode is ended
         if done:
-            total_reward_per_episode.append(np.sum(rewards_episode))
-            rewards_episode = list()
             phi_t = env.reset()
             if preprocess_fn:
                 phi_t = preprocess_fn(phi_t)
 
+            total_reward_per_episode.append(np.sum(rewards_episode))
+            rewards_episode = list()
             if (episode%tensorboard_freq == 0):
                 assert len(total_reward_per_episode) == tensorboard_freq
-                #tensorboard
-                writer.add_scalar('rewards/train_reward', np.mean(total_reward_per_episode), episode)
-                writer.add_scalar('loss/train_loss', np.mean(total_loss), episode)
-                total_reward_per_episode, total_loss = list(), list()
-                writer.add_scalar('other/replay_memory_size', len(replay_memory), episode)
-                writer.add_scalar('other/eps_exploration', eps_schedule.get_eps(), episode)
-                if demo_tensorboard:
+                scalars = {
+                    'rewards/train_reward': np.mean(total_reward_per_episode),
+                    'loss/train_loss': np.mean(total_loss),
+                    'other/replay_memory_size': len(replay_memory),
+                    'other/eps_exploration': eps_schedule.get_eps()
+                }
+                if input_images:
                     demos, demo_rewards = play(env, Q_network, preprocess_fn, nb_episodes=1, eps=eps_schedule.get_eps())
-                    writer.add_scalar('rewards/demo_reward', np.mean(demo_rewards), episode)
-                    for demo in demos:
-                        demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
-                        writer.add_video(name, demo, episode, fps=25)
+                    scalars['rewards/demo_reward'] = np.mean(demo_rewards)
+                else:
+                    demos = None
+                write_to_tensorboard(name, writer, episode, scalars, demos)
+                total_reward_per_episode, total_loss = list(), list()
                 
                 #save model
                 torch.save(Q_network.state_dict(), PATH_SAVE)
 
             episode += 1
 
-        a_t = get_action(phi_t, env, Q_network, eps_schedule)
+        a_t = eps_greedy_action(phi_t, env, Q_network, eps_schedule)
 
         phi_t_1, r_t, done, info = env.step(a_t)
         rewards_episode.append(r_t)

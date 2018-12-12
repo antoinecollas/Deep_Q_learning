@@ -26,17 +26,19 @@ class Memory():
         return len(self.replay_memory)
 
 class ExpReplay():
-    def __init__(self, replay_memory_size):
+    def __init__(self, replay_memory_size, images=True):
         self.replay_memory_size = replay_memory_size
         self.filling_level = 0
-    
+        self.images = images
+
     def push(self, transition):
         phi_t, a_t, r_t, phi_t_1, done = transition
-        phi_t = phi_t.squeeze()
-        phi_t_1 = phi_t_1.squeeze()
+        if self.images:
+            assert len(phi_t.shape) == 4
+            assert len(phi_t_1.shape) == 4
         if not hasattr(self, 'current_idx'):
             self.current_idx = -1
-            shape_memory_imgs = [self.replay_memory_size, *(phi_t.shape)]
+            shape_memory_imgs = [self.replay_memory_size, *(phi_t.shape[1:4])]
             self.phi_t = torch.zeros(shape_memory_imgs)
             self.a_t = torch.zeros(self.replay_memory_size, dtype=torch.long)
             self.r_t = torch.zeros(self.replay_memory_size)
@@ -54,9 +56,13 @@ class ExpReplay():
 
     def __getitem__(self, i):
         phi_t = self.phi_t[i]
+        if self.images and len(phi_t.shape) == 3:
+            phi_t = phi_t.unsqueeze(0)
         a_t = self.a_t[i]
         r_t = self.r_t[i]
         phi_t_1 = self.phi_t_1[i]
+        if self.images and len(phi_t_1.shape) == 3:
+            phi_t_1 = phi_t_1.unsqueeze(0)
         done = self.done[i]
         return [phi_t, a_t, r_t, phi_t_1, done]
     

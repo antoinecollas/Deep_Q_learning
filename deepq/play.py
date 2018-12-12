@@ -1,6 +1,6 @@
 import copy, torch
 import numpy as np
-from deepq.utils import get_action
+from deepq.utils import eps_greedy_action
 
 def play(env, Q, preprocess_fn=None, nb_episodes=10, eps=0.1):
     '''
@@ -25,7 +25,7 @@ def play(env, Q, preprocess_fn=None, nb_episodes=10, eps=0.1):
                 phi_t = preprocess_fn(episode[len(episode)-1]).to(device)
             else:
                 phi_t = episode[len(episode)-1]
-            action = get_action(phi_t, env, Q, eps)
+            action = eps_greedy_action(phi_t, env, Q, eps)
             observation, reward, done, _ = env.step(action)
             episode.append(observation)
             temp_reward.append(reward)

@@ -1,4 +1,4 @@
-import torch
+import torch, sys
 from tqdm import tqdm
 from torchvision.transforms import Compose, ToPILImage, Lambda, Resize, Grayscale, ToTensor
 from collections import deque
@@ -6,13 +6,13 @@ import random
 import numpy as np
 from deepq.memory import ExpReplay
 
-def init_replay_memory(env, replay_memory_size, replay_start_size, preprocess_fn=None, print_info=True):
+def init_replay_memory(env, replay_memory_size, replay_start_size, input_images, preprocess_fn=None, print_info=True):
     '''
     a uniform random policy is run for a number of steps and the resulting experience is used to populate replay memory
     Returns:
     - replay_memory
     '''
-    replay_memory = ExpReplay(replay_memory_size)
+    replay_memory = ExpReplay(replay_memory_size, input_images)
     done = True
 
     if print_info:
@@ -47,7 +47,7 @@ def preprocess(images, progress_bar=False):
     '''
     size_preprocessed_image = 84
     transformations = Compose([
-        Lambda(lambda image: image.reshape([image.shape[2], image.shape[0], image.shape[1]])),
+        # Lambda(lambda image: image.reshape([image.shape[2], image.shape[0], image.shape[1]])),
         ToPILImage(),
         Grayscale(),
         Resize((size_preprocessed_image,size_preprocessed_image)),
@@ -62,14 +62,12 @@ def preprocess(images, progress_bar=False):
         else: 
             for i in range(batch_size):
                 preprocessed_images.append(transformations(images[i]))
-        preprocessed_images = torch.stack(preprocessed_images).squeeze()
-        preprocessed_images = torch.unsqueeze(preprocessed_images, 0)
-
+        preprocessed_images = torch.stack(preprocessed_images).permute(1,2,3,0)
     else:
         raise ValueError('tensor s dimension should be 4')    
     return preprocessed_images
 
-def get_action(phi_t, env, Q, eps_schedule):
+def eps_greedy_action(phi_t, env, Q, eps_schedule):
     if type(eps_schedule) is float:
         eps = eps_schedule
     else:
@@ -95,3 +93,11 @@ def get_training_data(Q_hat, replay_memory, batch_size, discount_factor):
     y = y + discount_factor*Q_hat_values*mask
     y = y.detach() #we don't want to compute gradients on target variables
     return phi_t_training, actions_training, y
+
+def write_to_tensorboard(name, writer, episode, scalars, demos=None):
+    for key, value in scalars.items():
+        writer.add_scalar(key, value, episode)
+    if demos:
+        for demo in demos:
+            demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
+            writer.add_video(name, demo, episode, fps=25)

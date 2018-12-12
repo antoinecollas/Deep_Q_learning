@@ -13,8 +13,8 @@ train_deepq(
     env=env,
     name='Cartpole',
     Q_network=Q_network,
+    input_images=False,
     learning_rate=1e-4,
     tensorboard_freq=500,
     final_exploration_step=int(2*1e6),
-    demo_tensorboard=False # not available for cartpole
     )

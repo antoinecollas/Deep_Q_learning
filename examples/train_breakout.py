@@ -13,8 +13,8 @@ train_deepq(
     env=env,
     name='Breakout',
     Q_network=Q_network,
+    input_images=True,
     preprocess_fn=preprocess,
     replay_start_size=50000,
     replay_memory_size=50000,
-    demo_tensorboard=True,
     )
