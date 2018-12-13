@@ -25,8 +25,17 @@ def images():
     '''
     Generate batch of images of size: (bs, h, w, c)
     '''
-    agent_history_length = pytest.agent_history_length
-    images = torch.rand(size=[agent_history_length, 300, 200, 3])
+    nb_images = pytest.agent_history_length
+    env = gym.make(pytest.env_name)
+    phi_t = torch.tensor(env.reset())
+    images, done, i = [], False, 1
+    images.append(phi_t)
+    while (not done) and (i<nb_images):
+        a_t = env.action_space.sample() #random action
+        phi_t, _, done, _ = env.step(a_t)
+        images.append(torch.tensor(phi_t))
+        i += 1
+    images = torch.stack(images)
     return images
 
 @pytest.fixture('function') #invoked once per test function
@@ -41,7 +50,7 @@ def preprocessed_images():
 @pytest.fixture('function') #invoked once per test function
 def steps_env():
     '''
-    Generate steps of the environment: (1, timesteps, h, w)
+    Generate steps of the environment
     '''
     nb_timesteps = pytest.agent_history_length
     env = gym.make(pytest.env_name)

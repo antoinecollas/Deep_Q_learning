@@ -20,4 +20,4 @@ def test_play(env, Q):
         assert episode.shape[-1] == 3 #c
 
     for i, episode in enumerate(episodes):
-        imageio.mimwrite('./test_games/game_' + str(i) + '.mp4', episode.numpy(), fps=25//agent_history_length)
+        imageio.mimwrite('./visual_tests/game_' + str(i) + '.mp4', episode.numpy(), fps=25//agent_history_length)

@@ -47,7 +47,7 @@ def preprocess(images, progress_bar=False):
     '''
     size_preprocessed_image = 84
     transformations = Compose([
-        # Lambda(lambda image: image.reshape([image.shape[2], image.shape[0], image.shape[1]])),
+        Lambda(lambda image: image.permute(2,0,1)),
         ToPILImage(),
         Grayscale(),
         Resize((size_preprocessed_image,size_preprocessed_image)),
@@ -61,8 +61,8 @@ def preprocess(images, progress_bar=False):
                 preprocessed_images.append(transformations(images[i]))
         else: 
             for i in range(batch_size):
-                preprocessed_images.append(transformations(images[i]))
-        preprocessed_images = torch.stack(preprocessed_images).permute(1,2,3,0)
+                preprocessed_images.append(transformations(images[i]).squeeze(0))
+        preprocessed_images = torch.stack(preprocessed_images).permute(1,2,0).unsqueeze(0)
     else:
         raise ValueError('tensor s dimension should be 4')    
     return preprocessed_images
