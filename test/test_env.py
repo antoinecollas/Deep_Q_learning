@@ -1,10 +1,13 @@
 import torch, time
+import matplotlib.pyplot as plt
 
 def test_env(env):
     nb_timesteps, env = env
+    images = []
 
     #test reset
     observations = env.reset()
+    images.append(observations)
     assert type(observations) is torch.Tensor
     assert len(observations.shape) == 4
     assert observations.shape[0] == nb_timesteps
@@ -15,12 +18,20 @@ def test_env(env):
     while not done:
         a = env.action_space.sample()
         observations, reward, done, _ = env.step(a)
+        images.append(observations)
         assert type(observations) is torch.Tensor
         assert len(observations.shape) == 4
         assert observations.shape[0] == nb_timesteps
         assert observations.shape[-1] == 3 #nb color channels
         assert type(reward) is float
         assert type(done) is bool
+
+    #visual test: see in 'visual_tests' folder
+    for i, observations in enumerate(images):
+        for j, observation in enumerate(observations):
+            plt.subplot(1, nb_timesteps, j+1)
+            plt.imshow(observation)
+        plt.savefig('visual_tests/env_'+str(i)+'.png')
 
     #test reward
     env.reset()
