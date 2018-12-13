@@ -7,7 +7,7 @@ from torch.optim import RMSprop
 
 from deepq.wrapper_gym import KFrames
 from deepq.schedule import ScheduleExploration
-from deepq.utils import eps_greedy_action, get_training_data, init_replay_memory, write_to_tensorboard
+from deepq.utils import eps_greedy_action, init_replay_memory, write_to_tensorboard
 from deepq.neural_nets import CNN
 from deepq.play import play
 
@@ -15,7 +15,7 @@ def train_deepq(
     name,
     env,
     Q_network,
-    input_images,
+    input_as_images,
     preprocess_fn=None,
     batch_size=32,
     replay_start_size=50000,
@@ -47,7 +47,7 @@ def train_deepq(
     #TENSORBOARDX
     writer = SummaryWriter(comment=name)
 
-    replay_memory = init_replay_memory(env, replay_memory_size, replay_start_size, input_images, preprocess_fn)
+    replay_memory = init_replay_memory(env, replay_memory_size, replay_start_size, input_as_images, preprocess_fn)
 
     print('#### TRAINING ####')
     print('see more details on tensorboard')
@@ -62,13 +62,16 @@ def train_deepq(
 
     episode = 1
     rewards_episode, total_reward_per_episode, total_loss = list(), list(), list()
+
     for timestep in tqdm(range(nb_timesteps)):#tqdm
         #if an episode is ended
         if done:
+            #reset the environment
             phi_t = env.reset()
             if preprocess_fn:
                 phi_t = preprocess_fn(phi_t)
 
+            #tensorboard and save model
             total_reward_per_episode.append(np.sum(rewards_episode))
             rewards_episode = list()
             if (episode%tensorboard_freq == 0):
@@ -79,7 +82,7 @@ def train_deepq(
                     'other/replay_memory_size': len(replay_memory),
                     'other/eps_exploration': eps_schedule.get_eps()
                 }
-                if input_images:
+                if input_as_images:
                     demos, demo_rewards = play(env, Q_network, preprocess_fn, nb_episodes=1, eps=eps_schedule.get_eps())
                     scalars['rewards/demo_reward'] = np.mean(demo_rewards)
                 else:
@@ -92,22 +95,34 @@ def train_deepq(
 
             episode += 1
 
+        #choose action
         a_t = eps_greedy_action(phi_t, env, Q_network, eps_schedule)
 
+        #interact with the environment
         phi_t_1, r_t, done, info = env.step(a_t)
+
+        #for tensorboard
         rewards_episode.append(r_t)
+
+        #preprocess images
         if preprocess_fn:
             phi_t_1 = preprocess_fn(phi_t_1)
+
+        #store in memory
         replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
         phi_t = phi_t_1
 
         #training
         if timestep % update_frequency == 0:
             #get training data
-            phi_t_training, actions_training, y = get_training_data(Q_hat, replay_memory, batch_size, discount_factor)
+            phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = replay_memory.sample(batch_size)
+            phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = phi_t_training.to(device), actions_training.to(device), y.to(device), phi_t_1_training.to(device), episode_terminates.to(device)
+            Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
+            mask = torch.ones(episode_terminates.shape).to(device) - episode_terminates
+            y = y + discount_factor*Q_hat_values*mask
+            y = y.detach() #we don't want to compute gradients on target variables
 
             #forward
-            phi_t_training = phi_t_training.to(device)
             Q_values = Q_network(phi_t_training)
             mask = torch.zeros([batch_size, nb_actions]).to(device)
             mask.scatter_(1, actions_training.unsqueeze(1), 1.0)

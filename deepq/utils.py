@@ -6,13 +6,13 @@ import random
 import numpy as np
 from deepq.memory import ExpReplay
 
-def init_replay_memory(env, replay_memory_size, replay_start_size, input_images, preprocess_fn=None, print_info=True):
+def init_replay_memory(env, replay_memory_size, replay_start_size, input_as_images, preprocess_fn=None, print_info=True):
     '''
     a uniform random policy is run for a number of steps and the resulting experience is used to populate replay memory
     Returns:
     - replay_memory
     '''
-    replay_memory = ExpReplay(replay_memory_size, input_images)
+    replay_memory = ExpReplay(replay_memory_size, input_as_images)
     done = True
 
     if print_info:
@@ -82,17 +82,6 @@ def eps_greedy_action(phi_t, env, Q, eps_schedule):
         a_t = torch.argmax(Q(phi_t), dim=1)
     
     return int(a_t)
-
-def get_training_data(Q_hat, replay_memory, batch_size, discount_factor):
-    device = next(Q_hat.parameters()).device #we assume all parameters are on a same device
-    transitions_training = replay_memory.sample(batch_size)
-    phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = transitions_training
-    phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = phi_t_training.to(device), actions_training.to(device), y.to(device), phi_t_1_training.to(device), episode_terminates.to(device)
-    Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
-    mask = torch.ones(episode_terminates.shape).to(device) - episode_terminates
-    y = y + discount_factor*Q_hat_values*mask
-    y = y.detach() #we don't want to compute gradients on target variables
-    return phi_t_training, actions_training, y
 
 def write_to_tensorboard(name, writer, episode, scalars, demos=None):
     for key, value in scalars.items():

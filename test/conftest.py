@@ -68,7 +68,7 @@ def replay_memory():
     env = gym.make(pytest.env_name)
     nb_actions = env.action_space.n
     env = KFrames(env, history_length=nb_timesteps)
-    replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, input_images=True, preprocess_fn=preprocess, print_info=False)
+    replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, input_as_images=True, preprocess_fn=preprocess, print_info=False)
     return nb_actions, nb_timesteps, replay_memory
 
 @pytest.fixture('function') #invoked once per test function

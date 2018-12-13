@@ -6,7 +6,7 @@ def test_init_replay_memory(env):
     nb_timesteps, env = env
     replay_memory_size = 100
     replay_start_size = 10
-    replay_memory = init_replay_memory(env, replay_memory_size=replay_memory_size, replay_start_size=replay_start_size, input_images=True, preprocess_fn=preprocess, print_info=False)
+    replay_memory = init_replay_memory(env, replay_memory_size=replay_memory_size, replay_start_size=replay_start_size, input_as_images=True, preprocess_fn=preprocess, print_info=False)
     assert len(replay_memory) == replay_start_size
     assert replay_memory[0][0].shape == torch.Size([1, 84, 84, nb_timesteps])
     assert replay_memory[0][1].shape == torch.Size([])
