@@ -1,4 +1,5 @@
 import torch, time
+import numpy as np
 import matplotlib.pyplot as plt
 
 def test_env(env):
@@ -30,7 +31,7 @@ def test_env(env):
     for i, observations in enumerate(images):
         for j, observation in enumerate(observations):
             plt.subplot(1, nb_timesteps, j+1)
-            plt.imshow(observation)
+            plt.imshow(observation.numpy().astype(np.uint8))
         plt.savefig('visual_tests/env_'+str(i)+'.png')
 
     #test reward

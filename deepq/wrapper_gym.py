@@ -21,9 +21,9 @@ class KFrames(Wrapper):
         self.observations = Memory(self.history_length)
         self.done = False
         #we duplicate the first frame in order to have history_length frames
-        observation = torch.tensor(self.env.reset())
+        observation = torch.FloatTensor(self.env.reset())
         for i in range(self.history_length):
-            self.observations.push(observation)
+            self.observations.push(torch.FloatTensor(observation))
         observations = torch.stack(list(self.observations.replay_memory))
         return observations
 
@@ -47,7 +47,7 @@ class KFrames(Wrapper):
         if not self.done:
             observation, reward, self.done, info = self.env.step(action)
             sum_rewards += reward
-            self.observations.push(torch.tensor(observation))
+            self.observations.push(torch.FloatTensor(observation))
 
         observations = torch.stack(list(self.observations.replay_memory))
         return observations, sum_rewards, self.done, info
