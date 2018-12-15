@@ -89,4 +89,4 @@ def write_to_tensorboard(name, writer, episode, scalars, demos=None):
     if demos:
         for demo in demos:
             demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
-            writer.add_video(name, demo, episode, fps=25)
+            writer.add_video(name, demo.numpy().astype(np.uint8), episode, fps=25)

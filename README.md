@@ -21,10 +21,11 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
 - organize repo (OK)
 - update memory unittest (OK)
 - test new memory with GPU (OK)
+- colors are inverted in tensorboard (OK)
 - organize repo:
     - merge init_replay_memory with ExpReplay
-    - merge get_training_data with train_deepq
+    - merge get_training_data with train_deepq (OK)
+- test equations in train_deepq
 - add unit test on load/save with cartpole
-- colors are inverted in tensorboard
 - compare speed with openAI baselines
 - add gpu utilization in tensorboard (https://github.com/lanpa/tensorboardX/blob/master/examples/demo_nvidia_smi.py)
