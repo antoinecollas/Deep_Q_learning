@@ -1,20 +1,20 @@
-class ScheduleExploration():
+class LinearScheduler():
     '''
-    defines the exploration schedule (linear in Nature paper)
+    defines a lienar scheduler
     '''
-    def __init__(self, initial_exploration=1, final_exploration=0.1, final_timestep=1000000/4):
+    def __init__(self, initial_step=1, final_step=0.1, final_timestep=1e6):
         self.iteration = 0
-        self.b = initial_exploration
-        self.a = (final_exploration - initial_exploration)/(final_timestep-1)
-        self.final_exploration = final_exploration
+        self.b = initial_step
+        self.a = (final_step - initial_step)/(final_timestep-1)
+        self.final_step = final_step
         self.final_timestep = final_timestep
-        self.eps = initial_exploration
+        self.eps = initial_step
 
     def step(self):
         if self.iteration < self.final_timestep:
             res = self.a * self.iteration + self.b
         else:
-            res = self.final_exploration
+            res = self.final_step
         self.iteration += 1
         self.eps = res
         return res
