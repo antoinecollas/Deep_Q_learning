@@ -17,6 +17,7 @@ def train_deepq(
     Q_network,
     input_as_images,
     preprocess_fn=None,
+    double_Q=True,
     batch_size=32,
     replay_start_size=50000,
     replay_memory_size=50000,
@@ -117,7 +118,11 @@ def train_deepq(
             #get training data
             phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = replay_memory.sample(batch_size)
             phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = phi_t_training.to(device), actions_training.to(device), y.to(device), phi_t_1_training.to(device), episode_terminates.to(device)
-            Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
+            if double_Q:
+                temp = torch.max(Q_network(phi_t_1_training), dim=1)[1]
+                Q_hat_values = Q_hat(phi_t_1_training)[torch.arange(temp.shape[0]),temp]
+            else:
+                Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
             mask = torch.ones(episode_terminates.shape).to(device) - episode_terminates
             y = y + discount_factor*Q_hat_values*mask
             y = y.detach() #we don't want to compute gradients on target variables
