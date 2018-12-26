@@ -24,9 +24,9 @@ def train_deepq(
     agent_history_length=4,
     target_network_update_frequency=10000,
     discount_factor=0.99,
-    learning_rate_scheduler=LinearScheduler(initial_step=5*1e-4, final_step=5*1e-5, final_timestep=3*1e6),
+    learning_rate_scheduler=LinearScheduler(initial_step=1e-4, final_step=1e-5, final_timestep=3*1e6),
     update_frequency=4,
-    eps_scheduler=LinearScheduler(initial_step=1, final_step=0.1, final_timestep=1e6),
+    eps_scheduler=LinearScheduler(initial_step=1, final_step=0.1, final_timestep=3*1e6),
     nb_timesteps=int(1e7),
     tensorboard_freq=50,
     ):
@@ -139,9 +139,9 @@ def train_deepq(
             output.backward()
             optimizer.step()
             
-            #change learning rate
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = learning_rate_scheduler.step()
+        #change learning rate
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = learning_rate_scheduler.step()
 
         if timestep % target_network_update_frequency == 0:
             Q_hat = copy.deepcopy(Q_network).to(device)
