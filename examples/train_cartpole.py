@@ -16,6 +16,7 @@ train_deepq(
     env=env,
     name='Cartpole',
     Q_network=Q_network,
+    agent_history_length=AGENT_HISTORY_LENGTH,
     input_as_images=False,
     learning_rate_scheduler=learning_rate_scheduler,
     tensorboard_freq=500,
