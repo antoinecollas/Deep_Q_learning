@@ -88,7 +88,7 @@ class ExpReplay():
             phi_t_1 = torch.zeros(last_indices.shape[0], *(self.phi_t_1.shape[1:3]), self.history_length).squeeze(-1)
 
             first_indices = last_indices-(self.history_length-1)*np.ones(last_indices.shape, dtype=np.int64)
-            first_indices[first_indices<0] = 0
+            first_indices[first_indices<0] = first_indices[first_indices<0] % self.replay_memory_size
 
             list_indices = np.zeros((first_indices.shape[0], self.history_length))
             for i, (fi, li) in enumerate(zip(first_indices, last_indices)):

@@ -35,16 +35,14 @@ def test_experience_replay(steps_env):
     #if the memory is too small (nb_steps > size_max_memory)
     size_max_memory = nb_steps - 1
     assert size_max_memory >= 2
-    memory = ExpReplay(size_max_memory, history_length)
+    memory = ExpReplay(size_max_memory, 1)
     for i in range(nb_steps):
         memory.push(observations[i])
     assert len(memory) == size_max_memory
     #test if the most recents steps are in the memory
-    # for i in range(len(memory)):
-    #     for j in range(len(memory[i])):
-    #         if (type(memory[len(memory)-1-i][j]) is torch.Tensor) or (type(observations[len(observations)-1-i][j]) is torch.Tensor):
-    #             print(memory[len(memory)-1-i][j].shape)
-    #             print(observations[len(observations)-1-i][j].shape)
-    #             assert (memory[len(memory)-1-i][j] == observations[len(observations)-1-i][j]).all
-    #         else:
-    #             assert memory[len(memory)-1-i][j] == observations[len(observations)-1-i][j], 'memory['+str(i)+']'+'['+str(j)+']=' + str(memory[len(memory)-1-i][j]) + ' observations['+str(i)+']'+'['+str(j)+']=' + str(observations[len(observations)-1-i][j]) 
+    for i in range(len(memory)):
+        for j in range(len(memory[i])):
+            if (type(memory[len(memory)-1-i][j]) is torch.Tensor) or (type(observations[len(observations)-1-i][j]) is torch.Tensor):
+                assert (memory[len(memory)-1-i][j] == observations[len(observations)-1-i][j]).all
+            else:
+                assert memory[len(memory)-1-i][j] == observations[len(observations)-1-i][j], 'memory['+str(i)+']'+'['+str(j)+']=' + str(memory[len(memory)-1-i][j]) + ' observations['+str(i)+']'+'['+str(j)+']=' + str(observations[len(observations)-1-i][j]) 
