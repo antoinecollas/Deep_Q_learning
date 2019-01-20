@@ -5,11 +5,11 @@ from tensorboardX import SummaryWriter
 from torch.nn import SmoothL1Loss
 from torch.optim import RMSprop
 
-from deepq.wrapper_gym import KFrames
 from deepq.schedule import LinearScheduler
 from deepq.utils import eps_greedy_action, init_replay_memory, write_to_tensorboard
 from deepq.neural_nets import CNN
 from deepq.play import play
+from deepq.memory import Memory
 
 def train_deepq(
     name,
@@ -46,7 +46,7 @@ def train_deepq(
     #TENSORBOARDX
     writer = SummaryWriter(comment=name)
 
-    replay_memory = init_replay_memory(env, replay_memory_size, replay_start_size, input_as_images, preprocess_fn)
+    replay_memory = init_replay_memory(env, agent_history_length, replay_memory_size, replay_start_size, input_as_images, preprocess_fn)
 
     print('#### TRAINING ####')
     print('see more details on tensorboard')
@@ -56,7 +56,7 @@ def train_deepq(
     print('Number of trainable parameters:', Q_network.count_parameters())
     Q_hat = copy.deepcopy(Q_network).to(device)
     loss = SmoothL1Loss()
-    optimizer = RMSprop(Q_network.parameters(), lr=learning_rate_scheduler.get_eps(), alpha=0.95, eps=0.01, centered=True)
+    optimizer = RMSprop(Q_network.parameters(), lr=learning_rate_scheduler.get_eps(), momentum=0, alpha=0.95, eps=0.01, centered=True)
 
     episode = 1
     rewards_episode, total_reward_per_episode, total_loss = list(), list(), list()
@@ -68,6 +68,9 @@ def train_deepq(
             phi_t = env.reset()
             if preprocess_fn:
                 phi_t = preprocess_fn(phi_t)
+            last_episodes = Memory(agent_history_length)
+            while len(last_episodes.replay_memory)<agent_history_length:
+                last_episodes.push(phi_t)
 
             #tensorboard and save model
             total_reward_per_episode.append(np.sum(rewards_episode))
@@ -82,11 +85,11 @@ def train_deepq(
                     'other/learning_rate': learning_rate_scheduler.get_eps()
                 }
                 if input_as_images:
-                    demos, demo_rewards = play(env, Q_network, preprocess_fn, nb_episodes=1, eps=eps_scheduler.get_eps())
+                    demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=1, eps=eps_scheduler.get_eps())
                     scalars['rewards/demo_reward'] = np.mean(demo_rewards)
                 else:
                     demos = None
-                write_to_tensorboard(name, writer, episode, scalars, demos)
+                write_to_tensorboard(name, writer, episode, scalars, Q_network, demos)
                 total_reward_per_episode, total_loss = list(), list()
                 
                 #save model
@@ -95,7 +98,10 @@ def train_deepq(
             episode += 1
 
         #choose action
-        a_t = eps_greedy_action(phi_t, env, Q_network, eps_scheduler)
+        observations = torch.stack(last_episodes[0:agent_history_length]).to(device)
+        if input_as_images:
+            observations = observations.unsqueeze(0).permute(0,2,3,1)
+        a_t = eps_greedy_action(observations, env, Q_network, eps_scheduler)
 
         #interact with the environment
         phi_t_1, r_t, done, info = env.step(a_t)
@@ -110,6 +116,7 @@ def train_deepq(
         #store in memory
         replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
         phi_t = phi_t_1
+        last_episodes.push(phi_t)
 
         #training
         if timestep % update_frequency == 0:

@@ -6,13 +6,13 @@ import random
 import numpy as np
 from deepq.memory import ExpReplay
 
-def init_replay_memory(env, replay_memory_size, replay_start_size, input_as_images, preprocess_fn=None, print_info=True):
+def init_replay_memory(env, history_length, replay_memory_size, replay_start_size, input_as_images, preprocess_fn=None, print_info=True):
     '''
     a uniform random policy is run for a number of steps and the resulting experience is used to populate replay memory
     Returns:
     - replay_memory
     '''
-    replay_memory = ExpReplay(replay_memory_size, input_as_images)
+    replay_memory = ExpReplay(replay_memory_size, history_length, input_as_images)
     done = True
 
     if print_info:
@@ -42,7 +42,7 @@ def init_replay_memory(env, replay_memory_size, replay_start_size, input_as_imag
 def preprocess(images, progress_bar=False):
     ''' 
         Performs preprocessing on a batch of images (bs, h, w, c) or on a single image (h, w, c).
-        It doesn't handle flickering!! (there no flickering in breakout)
+        It doesn't handle flickering!! (there is no flickering in breakout)
         Use grayscale instead of luminance.
     '''
     size_preprocessed_image = 84
@@ -53,6 +53,8 @@ def preprocess(images, progress_bar=False):
         Resize((size_preprocessed_image,size_preprocessed_image)),
         ToTensor()
     ])
+    if len(images.shape) == 3:
+        images = images.unsqueeze(0)
     if len(images.shape) == 4:
         batch_size = images.shape[0]
         preprocessed_images = []
@@ -62,7 +64,7 @@ def preprocess(images, progress_bar=False):
         else: 
             for i in range(batch_size):
                 preprocessed_images.append(transformations(images[i]).squeeze(0))
-        preprocessed_images = torch.stack(preprocessed_images).permute(1,2,0).unsqueeze(0)
+        preprocessed_images = torch.stack(preprocessed_images).permute(1,2,0).squeeze()
     else:
         raise ValueError('tensor s dimension should be 4')    
     return preprocessed_images
@@ -83,10 +85,12 @@ def eps_greedy_action(phi_t, env, Q, eps_schedule):
     
     return int(a_t)
 
-def write_to_tensorboard(name, writer, episode, scalars, demos=None):
+def write_to_tensorboard(name, writer, episode, scalars, nn, demos=None):
     for key, value in scalars.items():
         writer.add_scalar(key, value, episode)
     if demos:
         for demo in demos:
             demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
             writer.add_video(name, demo.numpy().astype(np.uint8), episode, fps=25)
+    for name, param in nn.named_parameters():
+            writer.add_histogram(name, param.clone().cpu().data.numpy(), episode)

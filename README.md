@@ -29,3 +29,7 @@ Seita: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessi
 - add unit test on load/save with cartpole
 - compare speed with openAI baselines
 - add gpu utilization in tensorboard (https://github.com/lanpa/tensorboardX/blob/master/examples/demo_nvidia_smi.py)
+
+profiling:
+python -m cProfile -o cartpole.prof examples/train_cartpole.py
+snakeviz cartpole.prof

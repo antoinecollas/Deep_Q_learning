@@ -7,7 +7,7 @@ from deepq.utils import preprocess
 def test_play(env, Q):
     agent_history_length, env = env
     NB_EPISODES = 2
-    episodes, rewards = play(env, Q, preprocess, NB_EPISODES)
+    episodes, rewards = play(env, agent_history_length, Q, preprocess, NB_EPISODES)
     
     assert type(episodes) is list
     assert len(episodes) == len(rewards) == NB_EPISODES

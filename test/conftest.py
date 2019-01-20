@@ -17,7 +17,7 @@ def env():
     '''
     nb_timesteps = pytest.agent_history_length
     env = gym.make(pytest.env_name)
-    env = KFrames(env, history_length=nb_timesteps)
+    env = KFrames(env, skip_frames=nb_timesteps-1)
     return (nb_timesteps, env)
 
 @pytest.fixture('function') #invoked once per test function
@@ -54,7 +54,7 @@ def steps_env():
     '''
     nb_timesteps = pytest.agent_history_length
     env = gym.make(pytest.env_name)
-    env = KFrames(env, history_length=nb_timesteps)
+    env = KFrames(env, skip_frames=nb_timesteps-1)
     observations = []
     phi_t = preprocess(env.reset())
     done = False
@@ -66,7 +66,7 @@ def steps_env():
         observations.append([phi_t, a_t, r_t, phi_t_1, done])
         phi_t = phi_t_1
         i += 1
-    return observations
+    return (nb_timesteps, observations)
 
 @pytest.fixture('function') #invoked once per test function
 def replay_memory():
@@ -76,7 +76,7 @@ def replay_memory():
     nb_timesteps = pytest.agent_history_length
     env = gym.make(pytest.env_name)
     nb_actions = env.action_space.n
-    env = KFrames(env, history_length=nb_timesteps)
+    env = KFrames(env, skip_frames=nb_timesteps-1)
     replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, input_as_images=True, preprocess_fn=preprocess, print_info=False)
     return nb_actions, nb_timesteps, replay_memory
 

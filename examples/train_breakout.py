@@ -6,7 +6,7 @@ from deepq.utils import preprocess
 
 AGENT_HISTORY_LENGTH = 4
 env = gym.make("BreakoutNoFrameskip-v4")
-env = KFrames(env, AGENT_HISTORY_LENGTH)
+env = KFrames(env, AGENT_HISTORY_LENGTH-1)
 Q_network = CNN(AGENT_HISTORY_LENGTH, env.action_space.n)
 
 train_deepq(

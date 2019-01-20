@@ -1,4 +1,4 @@
-import torch, random
+import torch, random, time, sys
 from collections import deque
 import numpy as np
 
@@ -16,9 +16,20 @@ class Memory():
             self.replay_memory.popleft()
         self.replay_memory.append(transition)
 
-    def __getitem__(self, i):
-        return self.replay_memory[i]
-    
+    def __getitem__(self, indices):
+        if (type(indices)==int):
+            return self.replay_memory[indices]
+        elif (type(indices)==slice) or (type(indices)==np.ndarray):
+            if (type(indices)==slice):
+                start, stop, step = indices.indices(len(self))
+                indices = np.arange(start, stop, step, dtype=np.int64)
+            to_return = list()
+            for i in indices:
+                to_return.append(self.replay_memory[i])
+            return to_return
+        else:
+            raise TypeError("index must be int, slice, or numpy array")
+
     def sample(self, batch_size):
         return random.sample(self.replay_memory, batch_size)
     
@@ -26,19 +37,20 @@ class Memory():
         return len(self.replay_memory)
 
 class ExpReplay():
-    def __init__(self, replay_memory_size, images=True):
+    def __init__(self, replay_memory_size, history_length, images=True):
         self.replay_memory_size = replay_memory_size
         self.filling_level = 0
+        self.history_length = history_length
         self.images = images
 
     def push(self, transition):
         phi_t, a_t, r_t, phi_t_1, done = transition
         if self.images:
-            assert len(phi_t.shape) == 4
-            assert len(phi_t_1.shape) == 4
+            assert len(phi_t.shape) == 2
+            assert len(phi_t_1.shape) == 2
         if not hasattr(self, 'current_idx'):
             self.current_idx = -1
-            shape_memory_imgs = [self.replay_memory_size, *(phi_t.shape[1:4])]
+            shape_memory_imgs = [self.replay_memory_size, *(phi_t.shape)]
             self.phi_t = torch.zeros(shape_memory_imgs)
             self.a_t = torch.zeros(self.replay_memory_size, dtype=torch.long)
             self.r_t = torch.zeros(self.replay_memory_size)
@@ -54,16 +66,49 @@ class ExpReplay():
         done = 1 if done else 0
         self.done[self.current_idx] = done
 
-    def __getitem__(self, i):
-        phi_t = self.phi_t[i]
-        if self.images and len(phi_t.shape) == 3:
-            phi_t = phi_t.unsqueeze(0)
-        a_t = self.a_t[i]
-        r_t = self.r_t[i]
-        phi_t_1 = self.phi_t_1[i]
-        if self.images and len(phi_t_1.shape) == 3:
-            phi_t_1 = phi_t_1.unsqueeze(0)
-        done = self.done[i]
+    def __getitem__(self, last_indices):
+        if (type(last_indices)==int):
+            phi_t = torch.zeros(1, *(self.phi_t.shape[1:3]), self.history_length)
+            phi_t_1 = torch.zeros(1, *(self.phi_t_1.shape[1:3]), self.history_length)
+
+            first_indices = last_indices-(self.history_length-1) if last_indices-(self.history_length-1)>=0 else 0
+            list_indices = list(range(last_indices, first_indices))
+            while len(list_indices)<self.history_length:
+                list_indices.insert(0, 0)
+            if self.images:
+                phi_t[0] = self.phi_t[list_indices].permute([1,2,0])
+                phi_t_1[0] = self.phi_t_1[list_indices].permute([1,2,0])
+            else:
+                phi_t[0] = self.phi_t[list_indices]
+                phi_t_1[0] = self.phi_t_1[list_indices]
+            
+        elif (type(last_indices)==slice) or (type(last_indices)==np.ndarray):
+            if (type(last_indices)==slice):
+                start, stop, step = last_indices.indices(len(self))
+                last_indices = np.arange(start, stop, step, dtype=np.int64)
+
+            phi_t = torch.zeros(last_indices.shape[0], *(self.phi_t.shape[1:3]), self.history_length).squeeze(-1)
+            phi_t_1 = torch.zeros(last_indices.shape[0], *(self.phi_t_1.shape[1:3]), self.history_length).squeeze(-1)
+
+            first_indices = last_indices-(self.history_length-1)*np.ones(last_indices.shape, dtype=np.int64)
+            first_indices[first_indices<0] = 0
+            for i, (fi, li) in enumerate(zip(first_indices, last_indices)):
+                list_indices = list(range(fi, li+1))
+                while len(list_indices)<self.history_length:
+                    list_indices.insert(0, 0)
+                if self.images:
+                    phi_t[i] = self.phi_t[list_indices].permute([1,2,0])
+                    phi_t_1[i] = self.phi_t_1[list_indices].permute([1,2,0])
+                else:
+                    phi_t[i] = self.phi_t[list_indices]
+                    phi_t_1[i] = self.phi_t_1[list_indices]
+        else:
+            raise TypeError("index must be int, slice, or numpy array")
+
+        a_t = self.a_t[last_indices]
+        r_t = self.r_t[last_indices]
+        done = self.done[last_indices]
+
         return [phi_t, a_t, r_t, phi_t_1, done]
     
     def sample(self, batch_size):
