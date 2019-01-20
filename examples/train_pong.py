@@ -15,7 +15,5 @@ train_deepq(
     Q_network=Q_network,
     input_as_images=True,
     preprocess_fn=preprocess,
-    replay_start_size=100,
-    replay_memory_size=100,
     tensorboard_freq=5,
     )
