@@ -20,5 +20,6 @@ train_deepq(
     input_as_images=False,
     learning_rate_scheduler=learning_rate_scheduler,
     tensorboard_freq=500,
+    # nb_timesteps=int(1e5),
     eps_scheduler=eps_scheduler,
     )
