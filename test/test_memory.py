@@ -5,7 +5,7 @@ from deepq.utils import init_replay_memory, preprocess
 def test_init_replay_memory(env):
     history_length, env = env
     replay_memory_size = 100
-    replay_start_size = 10
+    replay_start_size = 100
     replay_memory = init_replay_memory(env, history_length=history_length, replay_memory_size=replay_memory_size, replay_start_size=replay_start_size, input_as_images=True, preprocess_fn=preprocess, print_info=False)
     assert len(replay_memory) == replay_start_size
     assert replay_memory[0][0].shape == torch.Size([1, 84, 84, history_length])

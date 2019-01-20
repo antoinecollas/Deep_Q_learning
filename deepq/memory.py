@@ -4,16 +4,13 @@ import numpy as np
 
 class Memory():
     def __init__(self, replay_memory_size):
-        self.replay_memory = deque()
-        self.replay_memory_size = replay_memory_size
+        self.replay_memory = deque(maxlen=replay_memory_size)
     
     def push(self, transition):
         if type(transition) is list:
             for i in range(len(transition)):
                 if torch.is_tensor(transition[i]):
                     transition[i] = transition[i].to('cpu')
-        if (len(self.replay_memory) >= self.replay_memory_size):
-            self.replay_memory.popleft()
         self.replay_memory.append(transition)
 
     def __getitem__(self, indices):
@@ -92,16 +89,18 @@ class ExpReplay():
 
             first_indices = last_indices-(self.history_length-1)*np.ones(last_indices.shape, dtype=np.int64)
             first_indices[first_indices<0] = 0
+
+            list_indices = np.zeros((first_indices.shape[0], self.history_length))
             for i, (fi, li) in enumerate(zip(first_indices, last_indices)):
-                list_indices = list(range(fi, li+1))
-                while len(list_indices)<self.history_length:
-                    list_indices.insert(0, 0)
-                if self.images:
-                    phi_t[i] = self.phi_t[list_indices].permute([1,2,0])
-                    phi_t_1[i] = self.phi_t_1[list_indices].permute([1,2,0])
-                else:
-                    phi_t[i] = self.phi_t[list_indices]
-                    phi_t_1[i] = self.phi_t_1[list_indices]
+                temp = np.arange(fi, li+1)
+                list_indices[i, list_indices.shape[1]-temp.shape[0]:] = temp
+
+            if self.images:
+                phi_t = self.phi_t[list_indices].permute([0,2,3,1])
+                phi_t_1 = self.phi_t_1[list_indices].permute([0,2,3,1])
+            else:
+                phi_t = self.phi_t[list_indices].squeeze()
+                phi_t_1 = self.phi_t_1[list_indices].squeeze()
         else:
             raise TypeError("index must be int, slice, or numpy array")
 
