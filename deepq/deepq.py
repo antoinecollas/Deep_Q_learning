@@ -85,7 +85,7 @@ def train_deepq(
                     'other/learning_rate': learning_rate_scheduler.get_eps()
                 }
                 if input_as_images:
-                    demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=1, eps=eps_scheduler.get_eps())
+                    demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=1, eps=0.1)
                     scalars['rewards/demo_reward'] = np.mean(demo_rewards)
                 else:
                     demos = None
