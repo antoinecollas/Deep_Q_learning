@@ -55,7 +55,7 @@ def train_deepq(
     print('Number of trainable parameters:', Q_network.count_parameters())
     Q_hat = copy.deepcopy(Q_network).to(device)
     loss = SmoothL1Loss()
-    optimizer = RMSprop(Q_network.parameters(), lr=0.00025, momentum=0, alpha=0.95, eps=0.00001, centered=True, weight_decay=0.95)
+    optimizer = RMSprop(Q_network.parameters(), lr=0.00025, momentum=0, alpha=0.95, eps=0.00001)
 
     episode = 1
     rewards_episode, total_reward_per_episode, total_loss = list(), list(), list()
