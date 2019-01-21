@@ -85,17 +85,22 @@ class ExpReplay():
 
             list_indices = np.zeros((first_indices.shape[0], self.history_length))
             for i, (fi, li) in enumerate(zip(first_indices, last_indices)):
-                temp = np.arange(fi, li+1)
+                li = li+1
+                if li<=fi:
+                    li += self.filling_level
+                temp = np.arange(fi, li) % self.filling_level
                 list_indices[i, list_indices.shape[1]-temp.shape[0]:] = temp
-            list_indices_t_plus_1 = (list_indices + np.ones(list_indices.shape)) % self.filling_level
+            list_indices_t_plus_1 = np.roll(list_indices, -1, axis=1)
+            list_indices_t_plus_1[:,-1] = (list_indices[:,-1]+1) % self.filling_level
 
+            list_indices, list_indices_t_plus_1 = list_indices.reshape(-1), list_indices_t_plus_1.reshape(-1)
             if self.images:
-                if len(self.phi_t[list_indices].shape) == 3:
-                    phi_t = self.phi_t[list_indices].unsqueeze(0).permute([0,2,3,1])
-                    phi_t_1 = self.phi_t[list_indices_t_plus_1].unsqueeze(0).permute([0,2,3,1])
-                else:
-                    phi_t = self.phi_t[list_indices].permute([0,2,3,1])
-                    phi_t_1 = self.phi_t[list_indices_t_plus_1].permute([0,2,3,1])
+                phi_t = self.phi_t[list_indices]
+                phi_t_1 = self.phi_t[list_indices_t_plus_1]
+                dim1 = int(len(list_indices)/self.history_length)
+                dim_image = [self.phi_t[0].shape[0], self.phi_t[0].shape[1]]
+                phi_t, phi_t_1 = phi_t.reshape(dim1, self.history_length, *dim_image), phi_t_1.reshape(dim1, self.history_length, *dim_image)
+                phi_t, phi_t_1 = phi_t.permute([0,2,3,1]), phi_t_1.permute([0,2,3,1])
             else:
                 phi_t = self.phi_t[list_indices].squeeze()
                 phi_t_1 = self.phi_t[list_indices_t_plus_1].squeeze()
@@ -109,7 +114,11 @@ class ExpReplay():
         return [phi_t, a_t, r_t, phi_t_1, done]
     
     def sample(self, batch_size):
-        sample = np.random.randint(self.filling_level, size=batch_size)
+        available_index_from = self.current_idx+self.history_length
+        available_index_to = (self.current_idx-1)
+        while available_index_to < available_index_from:
+            available_index_to += self.filling_level
+        sample = np.random.randint(available_index_from, available_index_to, size=batch_size) % self.filling_level
         return self[sample]
 
     def __len__(self):
