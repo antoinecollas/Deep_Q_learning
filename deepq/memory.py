@@ -62,24 +62,10 @@ class ExpReplay():
         self.done[self.current_idx] = done
 
     def __getitem__(self, last_indices):
-        if (type(last_indices)==int):
-            phi_t = torch.zeros(1, *(self.phi_t.shape[1:3]), self.history_length)
-            phi_t_1 = torch.zeros(1, *(self.phi_t.shape[1:3]), self.history_length)
-
-            first_indices = last_indices-(self.history_length-1) if last_indices-(self.history_length-1)>=0 else 0
-            list_indices = list(range(last_indices, first_indices))
-            list_indices_t_plus_1 = (list_indices + np.ones(list_indices.shape)) % self.replay_memory_size
-            while len(list_indices)<self.history_length:
-                list_indices.insert(0, 0)
-            if self.images:
-                phi_t[0] = self.phi_t[list_indices].permute([1,2,0])
-                phi_t_1[0] = self.phi_t[list_indices_t_plus_1].permute([1,2,0])
-            else:
-                phi_t[0] = self.phi_t[list_indices]
-                phi_t_1[0] = self.phi_t[list_indices_t_plus_1]
-            
-        elif (type(last_indices)==slice) or (type(last_indices)==np.ndarray):
-            if (type(last_indices)==slice):
+        if (type(last_indices)==int) or (type(last_indices)==slice) or (type(last_indices)==np.ndarray):
+            if (type(last_indices)==int):
+                last_indices = np.array([last_indices])
+            elif (type(last_indices)==slice):
                 start, stop, step = last_indices.indices(len(self))
                 last_indices = np.arange(start, stop, step, dtype=np.int64)
 
@@ -87,18 +73,21 @@ class ExpReplay():
             phi_t_1 = torch.zeros(last_indices.shape[0], *(self.phi_t.shape[1:3]), self.history_length).squeeze(-1)
 
             first_indices = last_indices-(self.history_length-1)*np.ones(last_indices.shape, dtype=np.int64)
-            first_indices[first_indices<0] = first_indices[first_indices<0] % self.replay_memory_size
+            first_indices[first_indices<0] = first_indices[first_indices<0] % self.filling_level
 
             list_indices = np.zeros((first_indices.shape[0], self.history_length))
-            list_indices_t_plus_1 = (list_indices + np.ones(list_indices.shape)) % self.replay_memory_size
-
             for i, (fi, li) in enumerate(zip(first_indices, last_indices)):
                 temp = np.arange(fi, li+1)
                 list_indices[i, list_indices.shape[1]-temp.shape[0]:] = temp
+            list_indices_t_plus_1 = (list_indices + np.ones(list_indices.shape)) % self.filling_level
 
             if self.images:
-                phi_t = self.phi_t[list_indices].permute([0,2,3,1])
-                phi_t_1 = self.phi_t[list_indices_t_plus_1].permute([0,2,3,1])
+                if len(self.phi_t[list_indices].shape) == 3:
+                    phi_t = self.phi_t[list_indices].unsqueeze(0).permute([0,2,3,1])
+                    phi_t_1 = self.phi_t[list_indices_t_plus_1].unsqueeze(0).permute([0,2,3,1])
+                else:
+                    phi_t = self.phi_t[list_indices].permute([0,2,3,1])
+                    phi_t_1 = self.phi_t[list_indices_t_plus_1].permute([0,2,3,1])
             else:
                 phi_t = self.phi_t[list_indices].squeeze()
                 phi_t_1 = self.phi_t[list_indices_t_plus_1].squeeze()

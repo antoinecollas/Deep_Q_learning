@@ -48,27 +48,6 @@ def preprocessed_images():
     return images
 
 @pytest.fixture('function') #invoked once per test function
-def steps_env():
-    '''
-    Generate steps of the environment
-    '''
-    nb_timesteps = pytest.agent_history_length
-    env = gym.make(pytest.env_name)
-    env = KFrames(env, skip_frames=nb_timesteps-1)
-    observations = []
-    phi_t = preprocess(env.reset())
-    done = False
-    i = 0
-    while (not done) and (i<10):
-        a_t = env.action_space.sample() #random action
-        phi_t_1, r_t, done, info = env.step(a_t)
-        phi_t_1 = preprocess(phi_t_1)
-        observations.append([phi_t, a_t, r_t, phi_t_1, done])
-        phi_t = phi_t_1
-        i += 1
-    return (nb_timesteps, observations)
-
-@pytest.fixture('function') #invoked once per test function
 def replay_memory():
     '''
     Generate a filled replay_memory

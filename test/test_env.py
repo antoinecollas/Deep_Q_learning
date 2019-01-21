@@ -1,4 +1,4 @@
-import torch, time
+import torch, time, os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -26,9 +26,12 @@ def test_env(env):
         assert type(done) is bool
 
     #visual test: see in 'visual_tests' folder
+    directory = 'visual_tests/test_env/'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     for i, observation in enumerate(images):
         plt.imshow(observation.numpy().astype(np.uint8))
-        plt.savefig('visual_tests/env_'+str(i)+'.png')
+        plt.savefig(directory+'env_'+str(i)+'.png')
 
     #test reward
     env.reset()
