@@ -31,7 +31,7 @@ def init_replay_memory(env, history_length, replay_memory_size, replay_start_siz
         phi_t_1, r_t, done, info = env.step(a_t)
         if preprocess_fn:
             phi_t_1 = preprocess_fn(phi_t_1)
-        replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
+        replay_memory.push([phi_t, a_t, r_t, done])
         phi_t = phi_t_1
 
     if print_info:

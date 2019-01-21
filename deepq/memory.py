@@ -41,17 +41,16 @@ class ExpReplay():
         self.images = images
 
     def push(self, transition):
-        phi_t, a_t, r_t, phi_t_1, done = transition
+        assert len(transition) == 4
+        phi_t, a_t, r_t, done = transition
         if self.images:
             assert len(phi_t.shape) == 2
-            assert len(phi_t_1.shape) == 2
         if not hasattr(self, 'current_idx'):
             self.current_idx = -1
             shape_memory_imgs = [self.replay_memory_size, *(phi_t.shape)]
             self.phi_t = torch.zeros(shape_memory_imgs)
             self.a_t = torch.zeros(self.replay_memory_size, dtype=torch.long)
             self.r_t = torch.zeros(self.replay_memory_size)
-            self.phi_t_1 = torch.zeros(shape_memory_imgs)
             self.done = torch.zeros(self.replay_memory_size)
         self.current_idx = (self.current_idx+1) % self.replay_memory_size
         if self.filling_level < self.replay_memory_size:
@@ -59,25 +58,25 @@ class ExpReplay():
         self.phi_t[self.current_idx] = phi_t.to('cpu')
         self.a_t[self.current_idx] = a_t
         self.r_t[self.current_idx] = r_t
-        self.phi_t_1[self.current_idx] = phi_t_1.to('cpu')
         done = 1 if done else 0
         self.done[self.current_idx] = done
 
     def __getitem__(self, last_indices):
         if (type(last_indices)==int):
             phi_t = torch.zeros(1, *(self.phi_t.shape[1:3]), self.history_length)
-            phi_t_1 = torch.zeros(1, *(self.phi_t_1.shape[1:3]), self.history_length)
+            phi_t_1 = torch.zeros(1, *(self.phi_t.shape[1:3]), self.history_length)
 
             first_indices = last_indices-(self.history_length-1) if last_indices-(self.history_length-1)>=0 else 0
             list_indices = list(range(last_indices, first_indices))
+            list_indices_t_plus_1 = (list_indices + np.ones(list_indices.shape)) % self.replay_memory_size
             while len(list_indices)<self.history_length:
                 list_indices.insert(0, 0)
             if self.images:
                 phi_t[0] = self.phi_t[list_indices].permute([1,2,0])
-                phi_t_1[0] = self.phi_t_1[list_indices].permute([1,2,0])
+                phi_t_1[0] = self.phi_t[list_indices_t_plus_1].permute([1,2,0])
             else:
                 phi_t[0] = self.phi_t[list_indices]
-                phi_t_1[0] = self.phi_t_1[list_indices]
+                phi_t_1[0] = self.phi_t[list_indices_t_plus_1]
             
         elif (type(last_indices)==slice) or (type(last_indices)==np.ndarray):
             if (type(last_indices)==slice):
@@ -85,22 +84,24 @@ class ExpReplay():
                 last_indices = np.arange(start, stop, step, dtype=np.int64)
 
             phi_t = torch.zeros(last_indices.shape[0], *(self.phi_t.shape[1:3]), self.history_length).squeeze(-1)
-            phi_t_1 = torch.zeros(last_indices.shape[0], *(self.phi_t_1.shape[1:3]), self.history_length).squeeze(-1)
+            phi_t_1 = torch.zeros(last_indices.shape[0], *(self.phi_t.shape[1:3]), self.history_length).squeeze(-1)
 
             first_indices = last_indices-(self.history_length-1)*np.ones(last_indices.shape, dtype=np.int64)
             first_indices[first_indices<0] = first_indices[first_indices<0] % self.replay_memory_size
 
             list_indices = np.zeros((first_indices.shape[0], self.history_length))
+            list_indices_t_plus_1 = (list_indices + np.ones(list_indices.shape)) % self.replay_memory_size
+
             for i, (fi, li) in enumerate(zip(first_indices, last_indices)):
                 temp = np.arange(fi, li+1)
                 list_indices[i, list_indices.shape[1]-temp.shape[0]:] = temp
 
             if self.images:
                 phi_t = self.phi_t[list_indices].permute([0,2,3,1])
-                phi_t_1 = self.phi_t_1[list_indices].permute([0,2,3,1])
+                phi_t_1 = self.phi_t[list_indices_t_plus_1].permute([0,2,3,1])
             else:
                 phi_t = self.phi_t[list_indices].squeeze()
-                phi_t_1 = self.phi_t_1[list_indices].squeeze()
+                phi_t_1 = self.phi_t[list_indices_t_plus_1].squeeze()
         else:
             raise TypeError("index must be int, slice, or numpy array")
 

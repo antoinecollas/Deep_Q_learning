@@ -114,7 +114,7 @@ def train_deepq(
             phi_t_1 = preprocess_fn(phi_t_1)
 
         #store in memory
-        replay_memory.push([phi_t, a_t, r_t, phi_t_1, done])
+        replay_memory.push([phi_t, a_t, r_t, done])
         phi_t = phi_t_1
         last_episodes.push(phi_t)
 
