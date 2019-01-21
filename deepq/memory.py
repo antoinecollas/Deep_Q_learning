@@ -69,6 +69,14 @@ class ExpReplay():
                 start, stop, step = last_indices.indices(len(self))
                 last_indices = np.arange(start, stop, step, dtype=np.int64)
 
+            not_available_index_from = self.current_idx
+            not_available_index_to = (self.current_idx+self.history_length)%self.filling_level
+            if not_available_index_to<=not_available_index_from:
+                not_available_index_to += self.filling_level
+            not_available_index = np.arange(not_available_index_from, not_available_index_to) % self.filling_level
+            if np.sum(np.isin(last_indices, not_available_index))>=1:
+                raise TypeError("some indices are not correct")
+
             phi_t = torch.zeros(last_indices.shape[0], *(self.phi_t.shape[1:3]), self.history_length).squeeze(-1)
             phi_t_1 = torch.zeros(last_indices.shape[0], *(self.phi_t.shape[1:3]), self.history_length).squeeze(-1)
 
