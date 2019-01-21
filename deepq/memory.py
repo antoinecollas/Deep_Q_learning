@@ -111,6 +111,11 @@ class ExpReplay():
         r_t = self.r_t[last_indices]
         done = self.done[last_indices]
 
+        dim1 = int(len(list_indices)/self.history_length)
+        mask = self.done[list_indices].reshape(dim1,self.history_length)
+        mask = (-(torch.sum(mask[:,0:mask.shape[1]-1], dim=1, dtype=torch.int64)-1)).nonzero().reshape(-1)
+        phi_t, a_t, r_t, phi_t_1, done = phi_t[mask], a_t[mask], r_t[mask], phi_t_1[mask], done[mask]        
+
         return [phi_t, a_t, r_t, phi_t_1, done]
     
     def sample(self, batch_size):
@@ -119,7 +124,8 @@ class ExpReplay():
         while available_index_to < available_index_from:
             available_index_to += self.filling_level
         sample = np.random.randint(available_index_from, available_index_to, size=batch_size) % self.filling_level
-        return self[sample]
+        to_return = self[sample]
+        return to_return
 
     def __len__(self):
         return self.filling_level

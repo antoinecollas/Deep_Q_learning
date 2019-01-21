@@ -134,7 +134,7 @@ def train_deepq(
 
             #forward
             Q_values = Q_network(phi_t_training)
-            mask = torch.zeros([batch_size, nb_actions]).to(device)
+            mask = torch.zeros([*episode_terminates.shape, nb_actions]).to(device)
             mask.scatter_(1, actions_training.unsqueeze(1), 1.0)
             Q_values = Q_values * mask
             Q_values = torch.sum(Q_values, dim=1)
