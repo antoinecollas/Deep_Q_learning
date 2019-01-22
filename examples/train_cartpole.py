@@ -18,6 +18,5 @@ train_deepq(
     agent_history_length=AGENT_HISTORY_LENGTH,
     input_as_images=False,
     tensorboard_freq=500,
-    # nb_timesteps=int(1e5),
     eps_scheduler=eps_scheduler,
     )

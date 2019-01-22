@@ -31,6 +31,7 @@ def train_deepq(
     ):
 
     nb_actions = env.action_space.n
+    print('NB ACTIONS:', nb_actions)
 
     #SAVE/LOAD MODEL
     DIRECTORY_MODELS = './models/'
@@ -55,10 +56,10 @@ def train_deepq(
     print('Number of trainable parameters:', Q_network.count_parameters())
     Q_hat = copy.deepcopy(Q_network).to(device)
     loss = SmoothL1Loss()
-    optimizer = RMSprop(Q_network.parameters(), lr=0.00025, momentum=0, alpha=0.95, eps=0.00001)
+    optimizer = RMSprop(Q_network.parameters(), lr=0.00025, momentum=0, alpha=0.95, eps=0.001, centered=True)
 
     episode = 1
-    rewards_episode, total_reward_per_episode, total_loss = list(), list(), list()
+    rewards_episode, total_reward_per_episode, total_loss, total_gradient_norm = list(), list(), list(), list()
 
     for timestep in tqdm(range(nb_timesteps)):#tqdm
         #if an episode is ended
@@ -77,8 +78,9 @@ def train_deepq(
             if (episode%tensorboard_freq == 0):
                 assert len(total_reward_per_episode) == tensorboard_freq
                 scalars = {
-                    'rewards/train_reward': np.mean(total_reward_per_episode),
-                    'loss/train_loss': np.mean(total_loss),
+                    'rewards/mean_train_reward': np.mean(total_reward_per_episode),
+                    'loss/mean_train_loss': np.mean(total_loss),
+                    'loss/mean_gradient_norm': np.mean(total_gradient_norm),
                     'other/replay_memory_size': len(replay_memory),
                     'other/eps_exploration': eps_scheduler.get_eps(),
                 }
@@ -88,7 +90,7 @@ def train_deepq(
                 else:
                     demos = None
                 write_to_tensorboard(name, writer, episode, scalars, Q_network, demos)
-                total_reward_per_episode, total_loss = list(), list()
+                total_reward_per_episode, total_loss, total_gradient_norm = list(), list(), list()
                 
                 #save model
                 torch.save(Q_network.state_dict(), PATH_SAVE)
@@ -142,6 +144,11 @@ def train_deepq(
             #backward and gradient descent
             optimizer.zero_grad()
             output.backward()
+            gradient_norm = torch.empty(0)
+            for p in Q_network.parameters():
+                gradient_norm = torch.cat([p.grad.data.reshape(-1), gradient_norm])
+            gradient_norm = gradient_norm.norm(2).item()
+            total_gradient_norm.append(float(gradient_norm))
             optimizer.step()
             
         #change learning rate
