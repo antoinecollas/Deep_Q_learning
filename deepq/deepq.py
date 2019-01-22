@@ -146,7 +146,7 @@ def train_deepq(
             output.backward()
             gradient_norm = torch.empty(0)
             for p in Q_network.parameters():
-                gradient_norm = torch.cat([p.grad.data.reshape(-1), gradient_norm])
+                gradient_norm = torch.cat([copy.deepcopy(p.grad.data).reshape(-1).cpu(), gradient_norm])
             gradient_norm = gradient_norm.norm(2).item()
             total_gradient_norm.append(float(gradient_norm))
             optimizer.step()
