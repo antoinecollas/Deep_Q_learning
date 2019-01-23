@@ -25,7 +25,7 @@ def train_deepq(
     target_network_update_frequency=10000,
     discount_factor=0.99,
     update_frequency=4,
-    eps_scheduler=LinearScheduler(initial_step=1, final_step=0.1, final_timestep=3*1e6),
+    eps_scheduler=LinearScheduler(initial_step=1, final_step=0.1, final_timestep=int(1e6)),
     nb_timesteps=int(1e7),
     tensorboard_freq=50,
     ):
@@ -59,7 +59,7 @@ def train_deepq(
     optimizer = RMSprop(Q_network.parameters(), lr=0.00025, momentum=0, alpha=0.95, eps=0.001, centered=True)
 
     episode = 1
-    rewards_episode, total_reward_per_episode, total_loss, total_gradient_norm = list(), list(), list(), list()
+    rewards_episode, total_reward_per_episode, total_gradient_norm = list(), list(), list()
 
     for timestep in tqdm(range(nb_timesteps)):#tqdm
         #if an episode is ended
@@ -79,18 +79,17 @@ def train_deepq(
                 assert len(total_reward_per_episode) == tensorboard_freq
                 scalars = {
                     'rewards/mean_train_reward': np.mean(total_reward_per_episode),
-                    'loss/mean_train_loss': np.mean(total_loss),
                     'loss/mean_gradient_norm': np.mean(total_gradient_norm),
                     'other/replay_memory_size': len(replay_memory),
                     'other/eps_exploration': eps_scheduler.get_eps(),
                 }
                 if input_as_images:
-                    demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=1, eps=0.1)
+                    demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=1, eps=0.01)
                     scalars['rewards/demo_reward'] = np.mean(demo_rewards)
                 else:
                     demos = None
                 write_to_tensorboard(name, writer, episode, scalars, Q_network, demos)
-                total_reward_per_episode, total_loss, total_gradient_norm = list(), list(), list()
+                total_reward_per_episode, total_gradient_norm = list(), list()
                 
                 #save model
                 torch.save(Q_network.state_dict(), PATH_SAVE)
@@ -138,20 +137,20 @@ def train_deepq(
             mask.scatter_(1, actions_training.unsqueeze(1), 1.0)
             Q_values = Q_values * mask
             Q_values = torch.sum(Q_values, dim=1)
-            output = loss(Q_values, y)
-            total_loss.append(float(output))
+
+            #error
+            error = y - Q_values
+            clipped_error = error.clamp(-1, 1)
+            d_error = clipped_error * -1.0
 
             #backward and gradient descent
             optimizer.zero_grad()
-            output.backward()
-            gradient_norm = torch.empty(0)
-            for p in Q_network.parameters():
-                gradient_norm = torch.cat([copy.deepcopy(p.grad.data).reshape(-1).cpu(), gradient_norm])
-            gradient_norm = gradient_norm.norm(2).item()
-            total_gradient_norm.append(float(gradient_norm))
+            Q_values.backward(d_error.data)
             optimizer.step()
-            
-        #change learning rate
+
+            gradient = torch.nn.utils.parameters_to_vector(Q_network.parameters())
+            gradient_norm = np.sqrt(gradient.detach().pow(2).sum().cpu())
+            total_gradient_norm.append(float(gradient_norm))
 
         if timestep % target_network_update_frequency == 0:
             Q_hat = copy.deepcopy(Q_network).to(device)
