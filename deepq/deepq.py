@@ -152,7 +152,7 @@ def train_deepq(
             gradient_norm = 0
             for p in Q_network.parameters():
                 gradient_norm += torch.sum(p.grad.data**2)
-            gradient_norm = np.sqrt(gradient_norm)
+            gradient_norm = np.sqrt(gradient_norm.cpu())
             total_gradient_norm.append(gradient_norm)
 
         if timestep % target_network_update_frequency == 0:
