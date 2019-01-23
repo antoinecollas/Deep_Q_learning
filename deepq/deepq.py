@@ -18,7 +18,7 @@ def train_deepq(
     input_as_images,
     preprocess_fn=None,
     double_Q=True,
-    batch_size=32,
+    batch_size=64,
     replay_start_size=50000,
     replay_memory_size=50000,
     agent_history_length=4,
@@ -52,8 +52,8 @@ def train_deepq(
     print('see more details on tensorboard')
 
     done = True #reset environment
+    print('Number of trainable parameters:', torch.nn.utils.parameters_to_vector(Q_network.parameters()).shape[0])
     Q_network = Q_network.to(device)
-    print('Number of trainable parameters:', Q_network.count_parameters())
     Q_hat = copy.deepcopy(Q_network).to(device)
     loss = SmoothL1Loss()
     optimizer = RMSprop(Q_network.parameters(), lr=0.00025, momentum=0, alpha=0.95, eps=0.001, centered=True)
@@ -88,7 +88,7 @@ def train_deepq(
                     scalars['rewards/demo_reward'] = np.mean(demo_rewards)
                 else:
                     demos = None
-                write_to_tensorboard(name, writer, episode, scalars, Q_network, demos)
+                write_to_tensorboard(name, writer, timestep, scalars, Q_network, demos)
                 total_reward_per_episode, total_gradient_norm = list(), list()
                 
                 #save model
@@ -149,9 +149,11 @@ def train_deepq(
             optimizer.step()
 
             #tensorboard
-            gradient = torch.nn.utils.parameters_to_vector(Q_network.parameters())
-            gradient_norm = np.sqrt(gradient.detach().pow(2).sum().cpu())
-            total_gradient_norm.append(float(gradient_norm))
+            gradient_norm = 0
+            for p in Q_network.parameters():
+                gradient_norm += torch.sum(p.grad.data**2)
+            gradient_norm = np.sqrt(gradient_norm)
+            total_gradient_norm.append(gradient_norm)
 
         if timestep % target_network_update_frequency == 0:
             Q_hat = copy.deepcopy(Q_network).to(device)
