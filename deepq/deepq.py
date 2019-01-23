@@ -120,34 +120,35 @@ def train_deepq(
         #training
         if timestep % update_frequency == 0:
             #get training data
-            phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = replay_memory.sample(batch_size)
-            phi_t_training, actions_training, y, phi_t_1_training, episode_terminates = phi_t_training.to(device), actions_training.to(device), y.to(device), phi_t_1_training.to(device), episode_terminates.to(device)
+            phi_t_training, actions_training, r, phi_t_1_training, episode_terminates = replay_memory.sample(batch_size)
+            phi_t_training, actions_training, r, phi_t_1_training, episode_terminates = phi_t_training.to(device), actions_training.to(device), r.to(device), phi_t_1_training.to(device), episode_terminates.to(device)
+            
+            #error
             if double_Q:
                 temp = torch.max(Q_network(phi_t_1_training), dim=1)[1]
                 Q_hat_values = Q_hat(phi_t_1_training)[torch.arange(temp.shape[0]),temp]
             else:
                 Q_hat_values = torch.max(Q_hat(phi_t_1_training), dim=1)[0]
-            mask = torch.ones(episode_terminates.shape).to(device) - episode_terminates
-            y = y + discount_factor*Q_hat_values*mask
-            y = y.detach() #we don't want to compute gradients on target variables
 
-            #forward
+            delta = r + (1-episode_terminates)*discount_factor*Q_hat_values
+            delta = delta.detach() #we don't want to compute gradients on target variables
+
             Q_values = Q_network(phi_t_training)
+
             mask = torch.zeros([*episode_terminates.shape, nb_actions]).to(device)
             mask.scatter_(1, actions_training.unsqueeze(1), 1.0)
             Q_values = Q_values * mask
-            Q_values = torch.sum(Q_values, dim=1)
-
-            #error
-            error = y - Q_values
-            clipped_error = error.clamp(-1, 1)
-            d_error = clipped_error * -1.0
+            delta = torch.sum(Q_values, dim=1) - delta
+            clipped_delta = delta.clamp(-1, 1)
+            targets = torch.zeros([*episode_terminates.shape, nb_actions]).to(device)
+            targets.masked_scatter_(mask.byte(), delta)
 
             #backward and gradient descent
             optimizer.zero_grad()
-            Q_values.backward(d_error.data)
+            Q_values.backward(targets.data)
             optimizer.step()
 
+            #tensorboard
             gradient = torch.nn.utils.parameters_to_vector(Q_network.parameters())
             gradient_norm = np.sqrt(gradient.detach().pow(2).sum().cpu())
             total_gradient_norm.append(float(gradient_norm))
