@@ -28,23 +28,23 @@ class CNN2(nn.Module):
     def __init__(self, agent_history_length, nb_actions):
         super(CNN2, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=agent_history_length, out_channels=32, kernel_size=8, stride=1, padding=1),
+            nn.Conv2d(in_channels=agent_history_length, out_channels=32, kernel_size=3, stride=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=8, stride=1, padding=1),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=6, stride=1, padding=1),
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
-            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
-            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1),
+            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1),
             nn.ReLU(inplace=True),            
         )
-        self.l1 = nn.Linear(in_features=256, out_features=128)
-        self.l2 = nn.Linear(in_features=128, out_features=nb_actions)
+        self.l1 = nn.Linear(in_features=512, out_features=256)
+        self.l2 = nn.Linear(in_features=256, out_features=nb_actions)
 
     def forward(self, x):
         x = x.permute(0,3,1,2)

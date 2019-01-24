@@ -43,6 +43,7 @@ def train_deepq(
     #GPU/CPU
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print('RUNNING ON', device)
+    print('Number of trainable parameters:', torch.nn.utils.parameters_to_vector(Q_network.parameters()).shape[0])
 
     #TENSORBOARDX
     writer = SummaryWriter(comment=name)
@@ -53,7 +54,6 @@ def train_deepq(
     print('see more details on tensorboard')
 
     done = True #reset environment
-    print('Number of trainable parameters:', torch.nn.utils.parameters_to_vector(Q_network.parameters()).shape[0])
     Q_network = Q_network.to(device)
     Q_hat = copy.deepcopy(Q_network).to(device)
     optimizer = RMSprop(Q_network.parameters(), lr=0.0004, momentum=0, alpha=0.95, eps=0.001, centered=True)
