@@ -57,7 +57,7 @@ def train_deepq(
     Q_network = Q_network.to(device)
     Q_hat = copy.deepcopy(Q_network).to(device)
     optimizer = RMSprop(Q_network.parameters(), lr=0.0004, momentum=0, alpha=0.95, eps=0.001, centered=True)
-    scheduler_steps = [500000,800000,1000000,1200000]
+    scheduler_steps = [500000,650000,800000,1000000,1200000,1400000]
     scheduler = MultiStepLR(optimizer, milestones=scheduler_steps, gamma=0.5)
 
     episode = 1
@@ -156,14 +156,9 @@ def train_deepq(
             #backward and gradient descent
             optimizer.zero_grad()
             Q_values.backward(targets.data)
-            optimizer.step()
-
-            #tensorboard
-            gradient_norm = 0
-            for p in Q_network.parameters():
-                gradient_norm += torch.sum(p.grad.data**2)
-            gradient_norm = np.sqrt(gradient_norm.cpu())
+            gradient_norm = torch.nn.utils.clip_grad_norm_(Q_network.parameters(), max_norm=10, norm_type=2)
             total_gradient_norm.append(gradient_norm)
+            optimizer.step()
 
         if timestep % target_network_update_frequency == 0:
             Q_hat = copy.deepcopy(Q_network).to(device)
