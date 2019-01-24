@@ -4,6 +4,7 @@ import numpy as np
 from tensorboardX import SummaryWriter
 from torch.nn import SmoothL1Loss
 from torch.optim import RMSprop
+from torch.optim.lr_scheduler import MultiStepLR
 
 from deepq.schedule import LinearScheduler
 from deepq.utils import eps_greedy_action, init_replay_memory, write_to_tensorboard
@@ -55,13 +56,22 @@ def train_deepq(
     print('Number of trainable parameters:', torch.nn.utils.parameters_to_vector(Q_network.parameters()).shape[0])
     Q_network = Q_network.to(device)
     Q_hat = copy.deepcopy(Q_network).to(device)
-    loss = SmoothL1Loss()
-    optimizer = RMSprop(Q_network.parameters(), lr=0.00025, momentum=0, alpha=0.95, eps=0.001, centered=True)
+    optimizer = RMSprop(Q_network.parameters(), lr=0.0004, momentum=0, alpha=0.95, eps=0.001, centered=True)
+    scheduler_steps = [500000,800000,1000000,1200000]
+    scheduler = MultiStepLR(optimizer, milestones=scheduler_steps, gamma=0.5)
 
     episode = 1
     rewards_episode, total_reward_per_episode, total_gradient_norm = list(), list(), list()
 
-    for timestep in tqdm(range(nb_timesteps)):#tqdm
+    for timestep in tqdm(range(nb_timesteps)):
+
+        #learning rate scheduler
+        scheduler.step()
+        if timestep in scheduler_steps:
+            print('New learning rate:')
+            for param_group in optimizer.param_groups:
+                print(param_group['lr'])
+
         #if an episode is ended
         if done:
             #reset the environment
