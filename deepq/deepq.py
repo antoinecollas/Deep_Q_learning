@@ -153,7 +153,7 @@ def train_deepq(
                 '2_other/eps_exploration': eps_scheduler.get_eps(),
             }
             if input_as_images and (timestep>500000): #500000 to accelerate beginning of training
-                demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=2, eps=0.01)
+                demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=5, eps=0.01)
                 scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
             else:
                 demos = None
