@@ -21,14 +21,14 @@ def train_deepq(
     double_Q=True,
     batch_size=64,
     replay_start_size=50000,
-    replay_memory_size=50000,
+    replay_memory_size=int(1e6),
     agent_history_length=4,
     target_network_update_frequency=10000,
     discount_factor=0.99,
     update_frequency=4,
     eps_scheduler=LinearScheduler(initial_step=1, final_step=0.1, final_timestep=int(1e6)),
     nb_timesteps=int(1e7),
-    tensorboard_freq=50,
+    tensorboard_freq=50000,
     ):
 
     nb_actions = env.action_space.n
@@ -60,11 +60,9 @@ def train_deepq(
     scheduler_steps = [500000,800000,1000000,1200000]
     scheduler = MultiStepLR(optimizer, milestones=scheduler_steps, gamma=0.5)
 
-    episode = 1
     rewards_episode, total_reward_per_episode, total_gradient_norm = list(), list(), list()
 
     for timestep in tqdm(range(nb_timesteps)):
-
         #learning rate scheduler
         scheduler.step()
         if timestep in scheduler_steps:
@@ -74,6 +72,8 @@ def train_deepq(
 
         #if an episode is ended
         if done:
+            total_reward_per_episode.append(np.sum(rewards_episode))
+            rewards_episode = list()
             #reset the environment
             phi_t = env.reset()
             if preprocess_fn:
@@ -81,30 +81,6 @@ def train_deepq(
             last_episodes = Memory(agent_history_length)
             while len(last_episodes.replay_memory)<agent_history_length:
                 last_episodes.push(phi_t)
-
-            #tensorboard and save model
-            total_reward_per_episode.append(np.sum(rewards_episode))
-            rewards_episode = list()
-            if (episode%tensorboard_freq == 0):
-                assert len(total_reward_per_episode) == tensorboard_freq
-                scalars = {
-                    'rewards/mean_train_reward': np.mean(total_reward_per_episode),
-                    'loss/mean_gradient_norm': np.mean(total_gradient_norm),
-                    'other/replay_memory_size': len(replay_memory),
-                    'other/eps_exploration': eps_scheduler.get_eps(),
-                }
-                if input_as_images:
-                    demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=1, eps=0.01)
-                    scalars['rewards/demo_reward'] = np.mean(demo_rewards)
-                else:
-                    demos = None
-                write_to_tensorboard(name, writer, timestep, scalars, Q_network, demos)
-                total_reward_per_episode, total_gradient_norm = list(), list()
-                
-                #save model
-                torch.save(Q_network.state_dict(), PATH_SAVE)
-
-            episode += 1
 
         #choose action
         observations = torch.stack(last_episodes[0:agent_history_length]).to(device)
@@ -128,7 +104,7 @@ def train_deepq(
         last_episodes.push(phi_t)
 
         #training
-        if timestep % update_frequency == 0:
+        if ((timestep+1) % update_frequency) == 0:
             #get training data
             phi_t_training, actions_training, r, phi_t_1_training, episode_terminates = replay_memory.sample(batch_size)
             phi_t_training, actions_training, r, phi_t_1_training, episode_terminates = phi_t_training.to(device), actions_training.to(device), r.to(device), phi_t_1_training.to(device), episode_terminates.to(device)
@@ -167,3 +143,22 @@ def train_deepq(
 
         if timestep % target_network_update_frequency == 0:
             Q_hat = copy.deepcopy(Q_network).to(device)
+
+        #tensorboard and save model
+        if timestep%tensorboard_freq == 0:
+            scalars = {
+                '0_rewards/mean_train_reward': np.mean(total_reward_per_episode),
+                '1_gradient/mean_gradient_norm': np.mean(total_gradient_norm),
+                '2_other/replay_memory_size': len(replay_memory),
+                '2_other/eps_exploration': eps_scheduler.get_eps(),
+            }
+            if input_as_images and (timestep>500000): #500000 to accelerate beginning of training
+                demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=2, eps=0.01)
+                scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
+            else:
+                demos = None
+            write_to_tensorboard(name, writer, timestep, scalars, Q_network, demos)
+            total_reward_per_episode, total_gradient_norm = list(), list()
+            
+            #save model
+            torch.save(Q_network.state_dict(), PATH_SAVE)

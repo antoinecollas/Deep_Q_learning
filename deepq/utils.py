@@ -89,8 +89,8 @@ def write_to_tensorboard(name, writer, episode, scalars, nn, demos=None):
     for key, value in scalars.items():
         writer.add_scalar(key, value, episode)
     if demos:
-        for demo in demos:
-            demo = demo.permute([3, 0, 1, 2]).unsqueeze(0)
-            writer.add_video(name, demo.numpy().astype(np.uint8), episode, fps=25)
+        #only put first demo in tensorboard
+        demo = demos[0].permute([3, 0, 1, 2]).unsqueeze(0)
+        writer.add_video(name, demo.numpy().astype(np.uint8), episode, fps=25)
     for name, param in nn.named_parameters():
-            writer.add_histogram(name, param.clone().cpu().data.numpy(), episode)
+        writer.add_histogram(name, param.clone().cpu().data.numpy(), episode)
