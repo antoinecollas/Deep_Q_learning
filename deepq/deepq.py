@@ -109,6 +109,9 @@ def train_deepq(
             phi_t_training, actions_training, r, phi_t_1_training, episode_terminates = replay_memory.sample(batch_size)
             phi_t_training, actions_training, r, phi_t_1_training, episode_terminates = phi_t_training.to(device), actions_training.to(device), r.to(device), phi_t_1_training.to(device), episode_terminates.to(device)
             
+            # clip reward
+            r = r.clamp(-1, 1)
+
             #error
             if double_Q:
                 temp = torch.max(Q_network(phi_t_1_training), dim=1)[1]
