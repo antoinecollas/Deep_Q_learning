@@ -46,6 +46,12 @@ class CNN2(nn.Module):
         self.l1 = nn.Linear(in_features=512, out_features=256)
         self.l2 = nn.Linear(in_features=256, out_features=nb_actions)
 
+        for i, m in enumerate(self.modules()):
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                print(m)
+                nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+                nn.init.zeros_(m.bias)
+
     def forward(self, x):
         x = x.permute(0,3,1,2)
         x = self.conv(x)
