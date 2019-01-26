@@ -48,14 +48,21 @@ class ExpReplay():
         if not hasattr(self, 'current_idx'):
             self.current_idx = -1
             shape_memory_imgs = [self.replay_memory_size, *(phi_t.shape)]
-            self.phi_t = torch.zeros(shape_memory_imgs)
+            if self.images:
+                self.phi_t = torch.zeros(shape_memory_imgs, dtype=torch.uint8)
+            else:
+                self.phi_t = torch.zeros(shape_memory_imgs)
             self.a_t = torch.zeros(self.replay_memory_size, dtype=torch.long)
             self.r_t = torch.zeros(self.replay_memory_size)
             self.done = torch.zeros(self.replay_memory_size)
         self.current_idx = (self.current_idx+1) % self.replay_memory_size
         if self.filling_level < self.replay_memory_size:
             self.filling_level += 1
-        self.phi_t[self.current_idx] = phi_t.to('cpu')
+        if self.images and phi_t.dtype == torch.float32:
+            phi_t = (phi_t.to('cpu') * 255).to(torch.uint8)
+            self.phi_t[self.current_idx] = phi_t
+        else:
+            self.phi_t[self.current_idx] = phi_t.to('cpu')
         self.a_t[self.current_idx] = a_t
         self.r_t[self.current_idx] = r_t
         done = 1 if done else 0
@@ -95,8 +102,8 @@ class ExpReplay():
 
             list_indices, list_indices_t_plus_1 = list_indices.reshape(-1), list_indices_t_plus_1.reshape(-1)
             if self.images:
-                phi_t = self.phi_t[list_indices]
-                phi_t_1 = self.phi_t[list_indices_t_plus_1]
+                phi_t = (self.phi_t[list_indices] / 255).to(torch.float32)
+                phi_t_1 = (self.phi_t[list_indices_t_plus_1] / 255).to(torch.float32)
                 dim1 = int(len(list_indices)/self.history_length)
                 dim_image = [self.phi_t[0].shape[0], self.phi_t[0].shape[1]]
                 phi_t, phi_t_1 = phi_t.reshape(dim1, self.history_length, *dim_image), phi_t_1.reshape(dim1, self.history_length, *dim_image)
