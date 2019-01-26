@@ -9,7 +9,6 @@ OBS_SPACE = 4
 env = gym.make("CartPole-v0")
 env = SkipFrames(env, AGENT_HISTORY_LENGTH)
 Q_network = MLP(OBS_SPACE, env.action_space.n)
-eps_scheduler = LinearScheduler(initial_step=1, final_step=0.1, final_timestep=2*1e6)
 
 train_deepq(
     env=env,
@@ -18,5 +17,4 @@ train_deepq(
     agent_history_length=AGENT_HISTORY_LENGTH,
     input_as_images=False,
     tensorboard_freq=500,
-    eps_scheduler=eps_scheduler,
     )
