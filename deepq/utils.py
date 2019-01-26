@@ -6,7 +6,7 @@ import random
 import numpy as np
 from deepq.memory import ExpReplay
 
-def init_replay_memory(env, history_length, replay_memory_size, replay_start_size, input_as_images, preprocess_fn=None, print_info=True):
+def init_replay_memory(env, history_length, replay_memory_size, replay_start_size, input_as_images, print_info=True):
     '''
     a uniform random policy is run for a number of steps and the resulting experience is used to populate replay memory
     Returns:
@@ -25,12 +25,8 @@ def init_replay_memory(env, history_length, replay_memory_size, replay_start_siz
         #if an episode is ended
         if done:
             phi_t = env.reset()
-            if preprocess_fn:
-                phi_t = preprocess_fn(phi_t)
         a_t = env.action_space.sample() #random action
         phi_t_1, r_t, done, info = env.step(a_t)
-        if preprocess_fn:
-            phi_t_1 = preprocess_fn(phi_t_1)
         replay_memory.push([phi_t, a_t, r_t, done])
         phi_t = phi_t_1
 
@@ -55,14 +51,14 @@ def preprocess(images):
     ])
     if len(images.shape) == 3:
         images = images.unsqueeze(0)
-    if len(images.shape) == 4:
-        batch_size = images.shape[0]
-        preprocessed_images = []
-        for i in range(batch_size):
-            preprocessed_images.append(transformations(images[i]).squeeze(0))
-        preprocessed_images = torch.stack(preprocessed_images).permute(1,2,0).squeeze()
-    else:
-        raise ValueError('tensor s dimension should be 4')    
+    assert len(images.shape) == 4
+    batch_size = images.shape[0]
+    preprocessed_images = []
+    for i in range(batch_size):
+        preprocessed_images.append(transformations(images[i]).squeeze(0))
+    preprocessed_images = torch.stack(preprocessed_images).permute(1,2,0).squeeze()
+    if len(preprocessed_images.shape) == 3:
+        preprocessed_images, _ = torch.max(preprocessed_images, dim=2, keepdim=False)
     return preprocessed_images
 
 def eps_greedy_action(phi_t, env, Q, eps_schedule):

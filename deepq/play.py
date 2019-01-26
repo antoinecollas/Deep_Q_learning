@@ -1,9 +1,11 @@
 import copy, torch
 import numpy as np
 from deepq.memory import Memory
-from deepq.utils import eps_greedy_action
+from deepq.utils import eps_greedy_action, preprocess
+from deepq.wrapper_gym import SkipFrames
+import gym
 
-def play(env, agent_history_length, Q, preprocess_fn=None, nb_episodes=10, eps=0.1):
+def play_atari(env_name, agent_history_length, Q, nb_episodes=10, eps=0.1):
     '''
     Input:
         - environment (the environment is copied, so it is not modified)
@@ -14,7 +16,8 @@ def play(env, agent_history_length, Q, preprocess_fn=None, nb_episodes=10, eps=0
         - list of observations (np arrays, one np array == one episode played)
     '''
     device = next(Q.parameters()).device
-    env = copy.deepcopy(env)
+    env = gym.make(env_name)
+    env = SkipFrames(env, agent_history_length-1)
     episodes, rewards = list(), list()
     for i in range(nb_episodes):
         episode, temp_reward = list(), list()
@@ -23,10 +26,7 @@ def play(env, agent_history_length, Q, preprocess_fn=None, nb_episodes=10, eps=0
         done = False
         memory = Memory(agent_history_length)
         while not done:
-            if preprocess_fn:
-                phi_t = preprocess_fn(episode[len(episode)-1]).to(device)
-            else:
-                phi_t = episode[len(episode)-1]
+            phi_t = preprocess(episode[len(episode)-1]).to(device)
             memory.push(phi_t)
             while len(memory.replay_memory)<agent_history_length:
                 memory.push(phi_t)

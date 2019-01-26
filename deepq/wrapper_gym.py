@@ -6,15 +6,20 @@ from deepq.memory import Memory
 class SkipFrames(Wrapper):
     """
         Implements: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessing-for-deep-q-networks-on-atari-2600-games/
-        without maximum component-wise ! (there no flickering in breakout)
     """
-    def __init__(self, env, skip_frames):
+    def __init__(self, env, skip_frames, preprocess_fn=None):
         super().__init__(env)
         self.skip_frames = skip_frames
+        self.preprocess_fn = preprocess_fn
+        if self.preprocess_fn:
+            assert skip_frames>0 #because we have to keep 2 frames to prevent flickering
 
     def reset(self):
         self.done = False
-        return torch.FloatTensor(self.env.reset())
+        oberservation = torch.FloatTensor(self.env.reset())
+        if self.preprocess_fn:
+            oberservation = self.preprocess_fn(oberservation)
+        return oberservation
 
     def step(self, action):
         '''
@@ -28,10 +33,19 @@ class SkipFrames(Wrapper):
 
         sum_rewards = 0
         j = 0
+        if self.preprocess_fn:
+            observations = []
         while (not self.done) and (j < self.skip_frames+1):
-            observation, reward, self.done, info = self.env.step(action)
+            if self.preprocess_fn:
+                observation, reward, self.done, info = self.env.step(action)
+                observations.append(torch.FloatTensor(observation))
+            else:
+                observation, reward, self.done, info = self.env.step(action)
             sum_rewards += reward
             j += 1
+        
+        if self.preprocess_fn:
+            observation = self.preprocess_fn(torch.stack(observations))
         observation = torch.FloatTensor(observation)
 
         return observation, sum_rewards, self.done, info

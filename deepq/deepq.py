@@ -9,15 +9,14 @@ from torch.optim.lr_scheduler import MultiStepLR
 from deepq.schedule import LinearScheduler
 from deepq.utils import eps_greedy_action, init_replay_memory, write_to_tensorboard
 from deepq.neural_nets import CNN
-from deepq.play import play
+from deepq.play import play_atari
 from deepq.memory import Memory
 
 def train_deepq(
-    name,
+    env_name,
     env,
     Q_network,
     input_as_images,
-    preprocess_fn=None,
     double_Q=True,
     batch_size=64,
     replay_start_size=50000,
@@ -38,7 +37,7 @@ def train_deepq(
     DIRECTORY_MODELS = './models/'
     if not os.path.exists(DIRECTORY_MODELS):
         os.makedirs(DIRECTORY_MODELS)
-    PATH_SAVE = DIRECTORY_MODELS + name + '_' + time.strftime('%Y%m%d-%H%M')
+    PATH_SAVE = DIRECTORY_MODELS + env_name + '_' + time.strftime('%Y%m%d-%H%M')
 
     #GPU/CPU
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -46,9 +45,9 @@ def train_deepq(
     print('Number of trainable parameters:', torch.nn.utils.parameters_to_vector(Q_network.parameters()).shape[0])
 
     #TENSORBOARDX
-    writer = SummaryWriter(comment=name)
+    writer = SummaryWriter(comment=env_name)
 
-    replay_memory = init_replay_memory(env, agent_history_length, replay_memory_size, replay_start_size, input_as_images, preprocess_fn)
+    replay_memory = init_replay_memory(env, agent_history_length, replay_memory_size, replay_start_size, input_as_images)
 
     print('#### TRAINING ####')
     print('see more details on tensorboard')
@@ -76,8 +75,6 @@ def train_deepq(
             rewards_episode = list()
             #reset the environment
             phi_t = env.reset()
-            if preprocess_fn:
-                phi_t = preprocess_fn(phi_t)
             last_episodes = Memory(agent_history_length)
             while len(last_episodes.replay_memory)<agent_history_length:
                 last_episodes.push(phi_t)
@@ -93,10 +90,6 @@ def train_deepq(
 
         #for tensorboard
         rewards_episode.append(r_t)
-
-        #preprocess images
-        if preprocess_fn:
-            phi_t_1 = preprocess_fn(phi_t_1)
 
         #store in memory
         replay_memory.push([phi_t, a_t, r_t, done])
@@ -156,11 +149,11 @@ def train_deepq(
                 '2_other/eps_exploration': eps_scheduler.get_eps(),
             }
             if input_as_images and (timestep>500000): #500000 to accelerate beginning of training
-                demos, demo_rewards = play(env, agent_history_length, Q_network, preprocess_fn, nb_episodes=5, eps=0.01)
+                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=5, eps=0.01)
                 scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
             else:
                 demos = None
-            write_to_tensorboard(name, writer, timestep, scalars, Q_network, demos)
+            write_to_tensorboard(env_name, writer, timestep, scalars, Q_network, demos)
             total_reward_per_episode, total_gradient_norm = list(), list()
             
             #save model
