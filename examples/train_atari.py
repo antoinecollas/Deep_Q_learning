@@ -15,7 +15,6 @@ def main(env_name):
         env_name=env_name,
         Q_network=Q_network,
         input_as_images=True,
-        preprocess_fn=preprocess,
     )
 
 if __name__ == "__main__":
