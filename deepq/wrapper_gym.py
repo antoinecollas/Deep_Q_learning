@@ -45,7 +45,7 @@ class SkipFrames(Wrapper):
             j += 1
         
         if self.preprocess_fn:
-            observation = self.preprocess_fn(torch.stack(observations))
+            observation = self.preprocess_fn(torch.stack(observations)[-2:])
         observation = torch.FloatTensor(observation)
 
         return observation, sum_rewards, self.done, info
