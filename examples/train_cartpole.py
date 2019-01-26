@@ -1,5 +1,5 @@
 import gym
-from deepq.wrapper_gym import KFrames
+from deepq.wrapper_gym import SkipFrames
 from deepq.deepq import train_deepq
 from deepq.neural_nets import MLP
 from deepq.schedule import LinearScheduler
@@ -7,7 +7,7 @@ from deepq.schedule import LinearScheduler
 AGENT_HISTORY_LENGTH = 1
 OBS_SPACE = 4
 env = gym.make("CartPole-v0")
-env = KFrames(env, AGENT_HISTORY_LENGTH)
+env = SkipFrames(env, AGENT_HISTORY_LENGTH)
 Q_network = MLP(OBS_SPACE, env.action_space.n)
 eps_scheduler = LinearScheduler(initial_step=1, final_step=0.1, final_timestep=2*1e6)
 

@@ -3,7 +3,7 @@ from gym import Wrapper
 import numpy as np
 from deepq.memory import Memory
 
-class KFrames(Wrapper):
+class SkipFrames(Wrapper):
     """
         Implements: https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessing-for-deep-q-networks-on-atari-2600-games/
         without maximum component-wise ! (there no flickering in breakout)

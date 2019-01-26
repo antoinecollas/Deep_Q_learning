@@ -1,5 +1,5 @@
 import pytest, gym, torch, random
-from deepq.wrapper_gym import KFrames
+from deepq.wrapper_gym import SkipFrames
 from deepq.utils import preprocess, init_replay_memory
 from deepq.neural_nets import CNN
 
@@ -17,7 +17,7 @@ def env():
     '''
     nb_timesteps = pytest.agent_history_length
     env = gym.make(pytest.env_name)
-    env = KFrames(env, skip_frames=nb_timesteps-1)
+    env = SkipFrames(env, skip_frames=nb_timesteps-1)
     return (nb_timesteps, env)
 
 @pytest.fixture('function') #invoked once per test function
@@ -55,7 +55,7 @@ def replay_memory():
     nb_timesteps = pytest.agent_history_length
     env = gym.make(pytest.env_name)
     nb_actions = env.action_space.n
-    env = KFrames(env, skip_frames=nb_timesteps-1)
+    env = SkipFrames(env, skip_frames=nb_timesteps-1)
     replay_memory = init_replay_memory(env, replay_memory_size=100, replay_start_size=100, input_as_images=True, preprocess_fn=preprocess, print_info=False)
     return nb_actions, nb_timesteps, replay_memory
 

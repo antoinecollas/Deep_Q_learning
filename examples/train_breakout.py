@@ -1,12 +1,12 @@
 import gym
-from deepq.wrapper_gym import KFrames
+from deepq.wrapper_gym import SkipFrames
 from deepq.deepq import train_deepq
 from deepq.neural_nets import CNN2
 from deepq.utils import preprocess
 
 AGENT_HISTORY_LENGTH = 4
 env = gym.make("BreakoutNoFrameskip-v4")
-env = KFrames(env, AGENT_HISTORY_LENGTH-1)
+env = SkipFrames(env, AGENT_HISTORY_LENGTH-1)
 Q_network = CNN2(AGENT_HISTORY_LENGTH, env.action_space.n)
 
 train_deepq(
