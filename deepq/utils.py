@@ -39,7 +39,7 @@ def init_replay_memory(env, history_length, replay_memory_size, replay_start_siz
 
     return replay_memory
 
-def preprocess(images, progress_bar=False):
+def preprocess(images):
     ''' 
         Performs preprocessing on a batch of images (bs, h, w, c) or on a single image (h, w, c).
         It doesn't handle flickering!! (there is no flickering in breakout)
@@ -58,12 +58,8 @@ def preprocess(images, progress_bar=False):
     if len(images.shape) == 4:
         batch_size = images.shape[0]
         preprocessed_images = []
-        if progress_bar:
-            for i in tqdm(range(batch_size)):
-                preprocessed_images.append(transformations(images[i]))
-        else: 
-            for i in range(batch_size):
-                preprocessed_images.append(transformations(images[i]).squeeze(0))
+        for i in range(batch_size):
+            preprocessed_images.append(transformations(images[i]).squeeze(0))
         preprocessed_images = torch.stack(preprocessed_images).permute(1,2,0).squeeze()
     else:
         raise ValueError('tensor s dimension should be 4')    
