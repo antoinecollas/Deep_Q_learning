@@ -25,9 +25,11 @@ def train_deepq(
     target_network_update_frequency=10000,
     discount_factor=0.99,
     update_frequency=4,
-    eps_scheduler=LinearScheduler(steps=[(0,1), (int(1e6),0.1), (int(1e7),0.01)]),
+    eps_training=LinearScheduler(steps=[(0,1), (int(1e6),0.1), (int(1e7),0.01)]),
+    eps_eval=0.01,
     nb_timesteps=int(1e7),
     tensorboard_freq=50000,
+    first_demo=500000 #500000 to accelerate beginning of training
     ):
 
     nb_actions = env.action_space.n
@@ -83,7 +85,7 @@ def train_deepq(
         observations = torch.stack(last_episodes[0:agent_history_length]).to(device)
         if input_as_images:
             observations = observations.unsqueeze(0).permute(0,2,3,1)
-        a_t = eps_greedy_action(observations, env, Q_network, eps_scheduler)
+        a_t = eps_greedy_action(observations, env, Q_network, eps_training)
 
         #interact with the environment
         phi_t_1, r_t, done, info = env.step(a_t)
@@ -146,10 +148,10 @@ def train_deepq(
                 '0_rewards/mean_train_reward': np.mean(total_reward_per_episode),
                 '1_gradient/mean_gradient_norm': np.mean(total_gradient_norm),
                 '2_other/replay_memory_size': len(replay_memory),
-                '2_other/eps_exploration': eps_scheduler.get_eps(),
+                '2_other/eps_exploration': eps_training.get_eps(),
             }
-            if input_as_images and (timestep>500000): #500000 to accelerate beginning of training
-                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=5, eps=0.01)
+            if input_as_images and (timestep>first_demo):
+                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=5, eps=eps_eval)
                 scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
             else:
                 demos = None
