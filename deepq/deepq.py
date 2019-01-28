@@ -58,7 +58,7 @@ def train_deepq(
     Q_network = Q_network.to(device)
     Q_hat = copy.deepcopy(Q_network).to(device)
     optimizer = RMSprop(Q_network.parameters(), lr=0.0004, momentum=0, alpha=0.95, eps=0.001, centered=True)
-    scheduler_steps = [500000,800000,1000000,1200000]
+    scheduler_steps = [5000000]
     scheduler = MultiStepLR(optimizer, milestones=scheduler_steps, gamma=0.5)
 
     rewards_episode, total_reward_per_episode, total_gradient_norm = list(), list(), list()
