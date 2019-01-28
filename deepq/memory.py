@@ -102,8 +102,8 @@ class ExpReplay():
 
             list_indices, list_indices_t_plus_1 = list_indices.reshape(-1), list_indices_t_plus_1.reshape(-1)
             if self.images:
-                phi_t = (self.phi_t[list_indices] / 255).to(torch.float32)
-                phi_t_1 = (self.phi_t[list_indices_t_plus_1] / 255).to(torch.float32)
+                phi_t = self.phi_t[list_indices].to(torch.float32) / 255
+                phi_t_1 = self.phi_t[list_indices_t_plus_1].to(torch.float32) / 255
                 dim1 = int(len(list_indices)/self.history_length)
                 dim_image = [self.phi_t[0].shape[0], self.phi_t[0].shape[1]]
                 phi_t, phi_t_1 = phi_t.reshape(dim1, self.history_length, *dim_image), phi_t_1.reshape(dim1, self.history_length, *dim_image)
