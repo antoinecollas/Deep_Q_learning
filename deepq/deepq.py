@@ -25,11 +25,11 @@ def train_deepq(
     target_network_update_frequency=10000,
     discount_factor=0.99,
     update_frequency=4,
-    eps_training=LinearScheduler(steps=[(0,1), (int(1e6),0.1), (int(1e7),0.01)]),
+    eps_training=LinearScheduler(steps=[(0,1), (int(1e6),0.01)]),
     eps_eval=0.01,
     nb_timesteps=int(1e7),
     tensorboard_freq=50000,
-    first_demo=500000 #500000 to accelerate beginning of training
+    first_demo=50000
     ):
 
     nb_actions = env.action_space.n
@@ -57,19 +57,11 @@ def train_deepq(
     done = True #reset environment
     Q_network = Q_network.to(device)
     Q_hat = copy.deepcopy(Q_network).to(device)
-    optimizer = RMSprop(Q_network.parameters(), lr=0.0004, momentum=0, alpha=0.95, eps=0.001, centered=True)
-    scheduler_steps = [5000000]
-    scheduler = MultiStepLR(optimizer, milestones=scheduler_steps, gamma=0.5)
+    optimizer = RMSprop(Q_network.parameters(), lr=0.0002, momentum=0, alpha=0.95, eps=0.001, centered=True)
 
     rewards_episode, total_reward_per_episode, total_gradient_norm = list(), list(), list()
 
     for timestep in tqdm(range(nb_timesteps)):
-        #learning rate scheduler
-        scheduler.step()
-        if timestep in scheduler_steps:
-            print('New learning rate:')
-            for param_group in optimizer.param_groups:
-                print(param_group['lr'])
 
         #if an episode is ended
         if done:
@@ -150,7 +142,7 @@ def train_deepq(
                 '2_other/replay_memory_size': len(replay_memory),
                 '2_other/eps_exploration': eps_training.get_eps(),
             }
-            if input_as_images and (timestep>first_demo):
+            if input_as_images and (timestep>=first_demo):
                 demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=5, eps=eps_eval)
                 scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
             else:
