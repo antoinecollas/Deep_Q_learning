@@ -18,7 +18,7 @@ def main(env_name):
     )
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Train a machine translation.')
+    parser = argparse.ArgumentParser(description='Train a Deep Q network on Atari games.')
     parser.add_argument("-e", dest="env", required=True,
     help="Atari environment: becareful it must a NoFrameSkip environment!! (Breakout, Pong, ...)")
     args = parser.parse_args()
