@@ -146,7 +146,7 @@ def train_deepq(
                 scalars['2_other/min_bs'] = np.min(total_bs)
                 scalars['2_other/mean_bs'] = np.mean(total_bs)
             if input_as_images and (timestep>=first_demo):
-                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=100, eps=eps_training.get_eps())
+                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=100, eps=float(eps_training.get_eps()))
                 scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
             else:
                 demos = None
