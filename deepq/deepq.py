@@ -26,7 +26,6 @@ def train_deepq(
     discount_factor=0.99,
     update_frequency=4,
     eps_training=LinearScheduler(steps=[(0,1), (int(1e6),0.1), (2*int(1e6),0.01)]),
-    eps_eval=0.01,
     nb_timesteps=5*int(1e7),
     tensorboard_freq=50000,
     first_demo=50000
@@ -147,7 +146,7 @@ def train_deepq(
                 scalars['2_other/min_bs'] = np.min(total_bs)
                 scalars['2_other/mean_bs'] = np.mean(total_bs)
             if input_as_images and (timestep>=first_demo):
-                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=100, eps=eps_eval)
+                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=100, eps=eps_training.get_eps())
                 scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
             else:
                 demos = None
