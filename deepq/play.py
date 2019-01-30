@@ -17,25 +17,26 @@ def play_atari(env_name, agent_history_length, Q, nb_episodes=10, eps=0.1):
     '''
     device = next(Q.parameters()).device
     env = gym.make(env_name)
-    env = SkipFrames(env, agent_history_length-1)
+    env = SkipFrames(env, agent_history_length-1, preprocess)
     episodes, rewards = list(), list()
     for i in range(nb_episodes):
         episode, temp_reward = list(), list()
-        observation = env.reset()
-        episode.append(observation)
         done = False
-        memory = Memory(agent_history_length)
+        phi_t = env.reset()
+        last_frames = Memory(agent_history_length)
+        while len(last_frames.replay_memory)<agent_history_length:
+            last_frames.push(phi_t)
+        
         while not done:
-            phi_t = preprocess(episode[len(episode)-1]).to(device)
-            memory.push(phi_t)
-            while len(memory.replay_memory)<agent_history_length:
-                memory.push(phi_t)
-            phi_t = torch.stack(memory[0:agent_history_length]).unsqueeze(0).to(device)
+            phi_t = torch.stack(last_frames[0:agent_history_length]).unsqueeze(0).to(device)
             phi_t = phi_t.permute(0,2,3,1)
             action = eps_greedy_action(phi_t, env, Q, eps)
-            observation, reward, done, _ = env.step(action)
-            episode.append(observation)
+            phi_t, reward, done, _ = env.step(action)
+            
+            episode.append(phi_t)
+            last_frames.push(phi_t)
             temp_reward.append(reward)
+        
         episodes.append(torch.stack(episode))
         rewards.append(float(np.sum(temp_reward)))
     
