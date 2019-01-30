@@ -25,7 +25,7 @@ def train_deepq(
     target_network_update_frequency=10000,
     discount_factor=0.99,
     update_frequency=4,
-    eps_training=LinearScheduler(steps=[(0,1), (int(1e6),0.01)]),
+    eps_training=LinearScheduler(steps=[(0,1), (300000,0.01)]),
     eps_eval=0.01,
     nb_timesteps=int(1e7),
     tensorboard_freq=50000,
