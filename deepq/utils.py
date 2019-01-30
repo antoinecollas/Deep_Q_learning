@@ -5,6 +5,7 @@ from collections import deque
 import random
 import numpy as np
 from deepq.memory import ExpReplay
+from matplotlib import pyplot as plt
 
 def init_replay_memory(env, history_length, replay_memory_size, replay_start_size, input_as_images, print_info=True):
     '''
@@ -81,8 +82,7 @@ def write_to_tensorboard(name, writer, episode, scalars, nn, demos=None, weights
     for key, value in scalars.items():
         writer.add_scalar(key, value, episode)
     if demos:
-        #only put first demo in tensorboard
-        demo = demos[0].permute([3, 0, 1, 2]).unsqueeze(0)
+        demo = demos[0].unsqueeze(0).unsqueeze(0).repeat(1,3,1,1,1) * 255 #N, C, T, H, W
         writer.add_video(name, demo.numpy().astype(np.uint8), episode, fps=25)
     if weights_histogram:
         for name, param in nn.named_parameters():
