@@ -20,6 +20,6 @@ def main(env_name):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train a machine translation.')
     parser.add_argument("-e", dest="env", required=True,
-    help="Atari environment: becareful it must a NoFrameSkip environment!! (BreakoutNoFrameskip-v4, PongNoFrameskip-v4, ...)")
+    help="Atari environment: becareful it must a NoFrameSkip environment!! (Breakout, Pong, ...)")
     args = parser.parse_args()
-    main(str(args.env))
+    main(str(args.env)+'NoFrameskip-v4')
