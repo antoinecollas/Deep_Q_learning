@@ -25,9 +25,9 @@ def train_deepq(
     target_network_update_frequency=10000,
     discount_factor=0.99,
     update_frequency=4,
-    eps_training=LinearScheduler(steps=[(0,1), (300000,0.01)]),
+    eps_training=LinearScheduler(steps=[(0,1), (int(1e6),0.1), (2*int(1e6),0.01)]),
     eps_eval=0.01,
-    nb_timesteps=int(1e7),
+    nb_timesteps=5*int(1e7),
     tensorboard_freq=50000,
     first_demo=50000
     ):
@@ -57,9 +57,9 @@ def train_deepq(
     done = True #reset environment
     Q_network = Q_network.to(device)
     Q_hat = copy.deepcopy(Q_network).to(device)
-    optimizer = RMSprop(Q_network.parameters(), lr=0.0002, momentum=0, alpha=0.95, eps=0.001, centered=True)
+    optimizer = RMSprop(Q_network.parameters(), lr=0.00025, momentum=0, alpha=0.95, eps=0.01, centered=True)
 
-    rewards_episode, total_reward_per_episode, total_gradient_norm = list(), list(), list()
+    rewards_episode, total_reward_per_episode, total_gradient_norm, total_bs = list(), list(), list(), list()
 
     for timestep in tqdm(range(nb_timesteps)):
 
@@ -117,7 +117,7 @@ def train_deepq(
             delta = torch.sum(Q_values, dim=1) - delta
             clipped_delta = delta.clamp(-1, 1)
             targets = torch.zeros([*episode_terminates.shape, nb_actions]).to(device)
-            targets.masked_scatter_(mask.byte(), delta)
+            targets.masked_scatter_(mask.byte(), clipped_delta)
 
             #backward and gradient descent
             optimizer.zero_grad()
@@ -130,6 +130,7 @@ def train_deepq(
                 gradient_norm += torch.sum(p.grad.data**2)
             gradient_norm = np.sqrt(gradient_norm.cpu())
             total_gradient_norm.append(gradient_norm)
+            total_bs.append(phi_t_training.shape[0])
 
         if timestep % target_network_update_frequency == 0:
             Q_hat = copy.deepcopy(Q_network).to(device)
@@ -137,18 +138,21 @@ def train_deepq(
         #tensorboard and save model
         if timestep%tensorboard_freq == 0:
             scalars = {
-                '0_rewards/mean_train_reward': np.mean(total_reward_per_episode),
-                '1_gradient/mean_gradient_norm': np.mean(total_gradient_norm),
                 '2_other/replay_memory_size': len(replay_memory),
                 '2_other/eps_exploration': eps_training.get_eps(),
             }
+            if timestep>0:
+                scalars['0_rewards/mean_train_reward'] = np.mean(total_reward_per_episode)
+                scalars['1_gradient/mean_gradient_norm'] = np.mean(total_gradient_norm)
+                scalars['2_other/min_bs'] = np.min(total_bs)
+                scalars['2_other/mean_bs'] = np.mean(total_bs)
             if input_as_images and (timestep>=first_demo):
-                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=5, eps=eps_eval)
+                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=100, eps=eps_eval)
                 scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
             else:
                 demos = None
             write_to_tensorboard(env_name, writer, timestep, scalars, Q_network, demos)
-            total_reward_per_episode, total_gradient_norm = list(), list()
+            total_reward_per_episode, total_gradient_norm, total_bs = list(), list(), list()
             
             #save model
             torch.save(Q_network.state_dict(), PATH_SAVE)
