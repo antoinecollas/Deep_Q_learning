@@ -78,11 +78,11 @@ def eps_greedy_action(phi_t, env, Q, eps_schedule):
     
     return int(a_t)
 
-def write_to_tensorboard(name, writer, episode, scalars, nn, demos=None, weights_histogram=False):
+def write_to_tensorboard(name, writer, episode, scalars, nn, demo=None, weights_histogram=False):
     for key, value in scalars.items():
         writer.add_scalar(key, value, episode)
-    if demos:
-        demo = demos[0].unsqueeze(0).unsqueeze(0).repeat(1,3,1,1,1) * 255 #N, C, T, H, W
+    if demo is not None:
+        demo = demo.unsqueeze(0).unsqueeze(0).repeat(1,3,1,1,1) * 255 #N, C, T, H, W
         writer.add_video(name, demo.numpy().astype(np.uint8), episode, fps=25)
     if weights_histogram:
         for name, param in nn.named_parameters():

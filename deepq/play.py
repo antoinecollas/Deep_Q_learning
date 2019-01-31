@@ -18,7 +18,7 @@ def play_atari(env_name, agent_history_length, Q, nb_episodes=10, eps=0.1):
     device = next(Q.parameters()).device
     env = gym.make(env_name)
     env = SkipFrames(env, agent_history_length-1, preprocess)
-    episodes, rewards = list(), list()
+    rewards = list()
     for i in range(nb_episodes):
         episode, temp_reward = list(), list()
         done = False
@@ -37,7 +37,6 @@ def play_atari(env_name, agent_history_length, Q, nb_episodes=10, eps=0.1):
             last_frames.push(phi_t)
             temp_reward.append(reward)
         
-        episodes.append(torch.stack(episode))
         rewards.append(float(np.sum(temp_reward)))
     
-    return episodes, rewards
+    return torch.stack(episode), rewards

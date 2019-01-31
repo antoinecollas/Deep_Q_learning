@@ -146,11 +146,11 @@ def train_deepq(
                 scalars['2_other/min_bs'] = np.min(total_bs)
                 scalars['2_other/mean_bs'] = np.mean(total_bs)
             if input_as_images and (timestep>=first_demo):
-                demos, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=100, eps=float(eps_training.get_eps()))
+                demo, demo_rewards = play_atari(env_name, agent_history_length, Q_network, nb_episodes=100, eps=float(eps_training.get_eps()))
                 scalars['0_rewards/demo_reward'] = np.mean(demo_rewards)
             else:
-                demos = None
-            write_to_tensorboard(env_name, writer, timestep, scalars, Q_network, demos)
+                demo = None
+            write_to_tensorboard(env_name, writer, timestep, scalars, Q_network, demo)
             total_reward_per_episode, total_gradient_norm, total_bs = list(), list(), list()
             
             #save model
