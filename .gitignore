@@ -11,3 +11,5 @@ dql.egg-info/*
 *.prof
 
 *.json
+
+*test_train*
